@@ -5,413 +5,943 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Library Digest</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --bg: #0f1117;
-    --surface: #1a1d27;
-    --surface2: #212436;
-    --border: #2a2d3a;
-    --accent: #6c8ef5;
-    --accent-dim: #3d4f8a;
-    --text: #e2e4ed;
-    --text-dim: #7a7f9a;
-    --danger: #e05c6a;
-    --success: #4caf7d;
-    --warning: #e0a84e;
-    --radius: 8px;
-  }
+:root {
+  --bg:           #0f1117;
+  --sidebar-bg:   #13151f;
+  --surface:      #1a1d27;
+  --surface2:     #20233200;
+  --border:       #272a3a;
+  --accent:       #6c8ef5;
+  --accent-dim:   #2b3468;
+  --text:         #e2e4ed;
+  --text-dim:     #666c8a;
+  --danger:       #e05c6a;
+  --success:      #4caf7d;
+  --warning:      #e0a84e;
+  --radius:       6px;
+}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 14px;
-    line-height: 1.5;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
+html, body { height: 100%; }
 
-  /* ── Header ───────────────────────────────────── */
-  header {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 12px 24px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface);
-    flex-shrink: 0;
-  }
-  .header-left { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-  header h1 { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; white-space: nowrap; }
-  .breadcrumb { color: var(--text-dim); font-size: 13px; }
-  .breadcrumb .sep { margin: 0 6px; }
-  .breadcrumb .topic-crumb { color: var(--text); font-weight: 500; }
-  .header-center { flex: 1; max-width: 480px; }
-  .search-wrap { position: relative; }
-  .search-wrap input { width: 100%; padding: 7px 12px 7px 32px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 13px; outline: none; }
-  .search-wrap input:focus { border-color: var(--accent); }
-  .search-icon-hdr { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-dim); font-size: 13px; pointer-events: none; }
-  .header-right { display: flex; gap: 8px; margin-left: auto; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  height: 100%;
+  overflow: hidden;
+}
 
-  /* ── Buttons ──────────────────────────────────── */
-  button { border: none; border-radius: var(--radius); cursor: pointer; font-size: 13px; font-weight: 500; padding: 7px 14px; transition: opacity 0.15s; white-space: nowrap; }
-  button:hover { opacity: 0.85; }
-  button:disabled { opacity: 0.4; cursor: not-allowed; }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 6px 12px; }
-  .btn-danger-sm { background: transparent; border: none; color: var(--danger); padding: 3px 7px; font-size: 12px; }
+/* ── App shell ──────────────────────────────────────────────── */
+.app {
+  display: grid;
+  grid-template-columns: 216px 1fr;
+  height: 100vh;
+  overflow: hidden;
+}
 
-  /* ── Forms / inputs ───────────────────────────── */
-  input[type="text"], textarea {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    padding: 7px 10px;
-    font-size: 13px;
-    font-family: inherit;
-    outline: none;
-    transition: border-color 0.15s;
-    width: 100%;
-  }
-  input[type="text"]:focus, textarea:focus { border-color: var(--accent); }
-  textarea { resize: vertical; }
+/* ── Sidebar ────────────────────────────────────────────────── */
+.sidebar {
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
 
-  .form-row { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; }
-  .form-row input { flex: 1; }
+.sidebar-brand {
+  padding: 15px 14px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  flex-shrink: 0;
+}
 
-  /* ── Tags chip input ──────────────────────────── */
-  .tag-input-box {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    align-items: center;
-    padding: 5px 8px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    cursor: text;
-    min-height: 36px;
-    position: relative;
-  }
-  .tag-input-box:focus-within { border-color: var(--accent); }
-  .tag-input-box input {
-    border: none;
-    padding: 2px 4px;
-    background: transparent;
-    flex: 1;
-    min-width: 80px;
-    width: auto;
-  }
-  .tag-input-box input:focus { border-color: transparent; }
-  .tag-chip { display: inline-flex; align-items: center; gap: 4px; background: var(--accent-dim); color: var(--text); border-radius: 4px; padding: 2px 8px; font-size: 12px; }
-  .tag-chip button { background: none; border: none; color: var(--text-dim); padding: 0 0 0 2px; font-size: 11px; cursor: pointer; line-height: 1; }
-  .tag-suggestions {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    z-index: 100;
-    max-height: 150px;
-    overflow-y: auto;
-  }
-  .tag-suggestion { padding: 7px 12px; cursor: pointer; font-size: 13px; }
-  .tag-suggestion:hover { background: var(--border); }
+.sidebar-search-wrap {
+  padding: 0 10px 8px;
+  flex-shrink: 0;
+}
 
-  /* ── Source cards ─────────────────────────────── */
-  .source-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 11px 13px;
-    margin-bottom: 8px;
-  }
-  .source-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-  .source-info { flex: 1; min-width: 0; }
-  .source-title-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-  .source-title { font-weight: 500; font-size: 13px; }
-  .status-badge { font-size: 11px; border-radius: 4px; padding: 1px 6px; }
-  .status-done    { background: #1a3a2a; color: var(--success); }
-  .status-pending { background: #2a2010; color: var(--warning); }
-  .status-error   { background: #2a1015; color: var(--danger); }
-  .source-meta { font-size: 12px; color: var(--text-dim); margin-top: 3px; word-break: break-all; }
-  .tag-pills { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
-  .tag-pill { background: var(--accent-dim); color: var(--text); border-radius: 4px; padding: 1px 7px; font-size: 11px; }
+.sidebar-search {
+  width: 100%;
+  padding: 6px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+}
+.sidebar-search:focus { border-color: var(--accent); }
+.sidebar-search::placeholder { color: var(--text-dim); }
 
-  /* ── Note cards ───────────────────────────────── */
-  .note-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px 13px;
-    margin-bottom: 8px;
-  }
-  .note-card.editing { border-color: var(--accent); }
-  .note-meta { font-size: 11px; color: var(--text-dim); margin-bottom: 6px; }
-  .note-body { font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; cursor: pointer; }
-  .note-body:hover { color: var(--accent); }
-  .note-edit-area { width: 100%; min-height: 80px; }
-  .note-actions { display: flex; gap: 6px; margin-top: 8px; justify-content: flex-end; }
+.sidebar-label {
+  padding: 6px 14px 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
 
-  /* ── Add-source form ──────────────────────────── */
-  .add-form { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
-  .add-status { font-size: 12px; min-height: 16px; }
-  .add-status.error { color: var(--danger); }
-  .add-status.ok { color: var(--success); }
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2px 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
 
-  /* ── Topic cards ──────────────────────────────── */
-  .topic-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px 18px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    transition: border-color 0.15s;
-  }
-  .topic-card:hover { border-color: var(--accent); }
-  .topic-card-info { flex: 1; min-width: 0; }
-  .topic-card-name { font-weight: 600; font-size: 15px; }
-  .topic-card-desc { color: var(--text-dim); font-size: 13px; margin-top: 2px; }
-  .topic-card-stats { font-size: 12px; color: var(--text-dim); margin-top: 6px; }
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-dim);
+  transition: background 0.1s, color 0.1s;
+  user-select: none;
+}
+.nav-item:hover  { background: var(--surface); color: var(--text); }
+.nav-item.active { background: var(--surface); color: var(--text); font-weight: 500; }
 
-  /* ── Views ────────────────────────────────────── */
-  #app { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
-  .view { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
-  .hidden { display: none !important; }
+.nav-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+}
+.nav-item.active .nav-dot { background: var(--accent); }
 
-  /* Topics list */
-  #view-topics { padding: 24px; overflow-y: auto; }
-  .view-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-  .view-toolbar h2 { font-size: 18px; font-weight: 600; }
-  .new-topic-form { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px; }
-  .form-actions { display: flex; gap: 8px; margin-top: 4px; }
+.nav-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-  /* Topic detail */
-  #view-topic { display: flex; flex-direction: column; }
-  .topic-detail-toolbar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 24px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface);
-    flex-shrink: 0;
-  }
-  .topic-layout {
-    display: grid;
-    grid-template-columns: 380px 1fr;
-    flex: 1;
-    overflow: hidden;
-  }
-  .pane { overflow-y: auto; padding: 20px; }
-  .pane + .pane { border-left: 1px solid var(--border); }
-  .pane-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-  .pane-title { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-dim); }
+.nav-count {
+  font-size: 10px;
+  color: var(--text-dim);
+}
 
-  /* ── Tags drawer ──────────────────────────────── */
-  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; }
-  .drawer {
-    position: fixed;
-    top: 0; right: 0; bottom: 0;
-    width: 320px;
-    background: var(--surface);
-    border-left: 1px solid var(--border);
-    z-index: 201;
-    display: flex;
-    flex-direction: column;
-    padding: 20px;
-    gap: 12px;
-    overflow-y: auto;
-  }
-  .drawer-header { display: flex; justify-content: space-between; align-items: center; }
-  .drawer-header span { font-weight: 600; font-size: 15px; }
-  .tag-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
-  .tag-row-name { flex: 1; font-size: 13px; }
-  .tag-row-count { font-size: 12px; color: var(--text-dim); }
-  .tag-edit-input { flex: 1; padding: 4px 7px; font-size: 13px; }
+.sidebar-footer {
+  padding: 8px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
 
-  /* ── Search overlay ───────────────────────────── */
-  .search-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.6);
-    z-index: 300;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding-top: 80px;
-  }
-  .search-results-panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    width: 680px;
-    max-width: 96vw;
-    max-height: 70vh;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-  }
-  .search-results-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--border); font-weight: 500; flex-shrink: 0; }
-  .search-group { padding: 14px 18px; border-bottom: 1px solid var(--border); }
-  .search-group-title { font-size: 12px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; cursor: pointer; }
-  .search-group-title:hover { text-decoration: underline; }
-  .search-hit { padding: 8px 0; border-bottom: 1px solid var(--border); }
-  .search-hit:last-child { border-bottom: none; }
-  .search-hit-header { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; flex-wrap: wrap; }
-  .search-hit-title { font-weight: 500; font-size: 13px; }
-  .search-hit-score { font-size: 11px; color: var(--text-dim); }
-  .search-hit-text { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+.btn-new-topic {
+  width: 100%;
+  padding: 7px 10px;
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.1s;
+}
+.btn-new-topic:hover { background: var(--surface); color: var(--text); border-color: var(--accent); }
 
-  /* ── Misc ─────────────────────────────────────── */
-  .empty { color: var(--text-dim); font-size: 13px; padding: 20px 0; text-align: center; }
-  .spinner { display: inline-block; animation: spin 0.8s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+/* ── Main area ──────────────────────────────────────────────── */
+.main {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.hidden { display: none !important; }
+
+/* ── Home view ──────────────────────────────────────────────── */
+#view-home {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-state {
+  text-align: center;
+  max-width: 280px;
+}
+
+.home-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  margin-bottom: 8px;
+}
+
+.home-sub {
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 18px;
+}
+
+/* ── Topic view ─────────────────────────────────────────────── */
+#view-topic {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Sub-header */
+.topic-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--sidebar-bg);
+  flex-shrink: 0;
+}
+
+.topic-header-left { flex: 1; min-width: 0; }
+
+.topic-name {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topic-description {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topic-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.topic-search-input {
+  padding: 5px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  width: 190px;
+}
+.topic-search-input:focus { border-color: var(--accent); }
+.topic-search-input::placeholder { color: var(--text-dim); }
+
+/* Tag filter bar */
+.tag-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.filter-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.filter-tag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: inherit;
+  font-weight: 500;
+  transition: all 0.1s;
+}
+.filter-tag:hover { border-color: var(--accent); color: var(--text); }
+.filter-tag.active { background: var(--accent-dim); border-color: var(--accent); color: var(--text); }
+
+/* In-topic search results panel */
+.search-results-panel {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  max-height: 38vh;
+  overflow-y: auto;
+}
+
+.search-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+}
+
+.search-hit {
+  padding: 9px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.search-hit:last-child { border-bottom: none; }
+
+.search-hit-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+  flex-wrap: wrap;
+}
+
+.search-hit-title { font-size: 12px; font-weight: 500; }
+.search-hit-chapter { font-size: 11px; color: var(--text-dim); }
+.search-hit-score { font-size: 11px; color: var(--text-dim); margin-left: auto; }
+.search-hit-text { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+
+/* ── Two-column topic body ──────────────────────────────────── */
+.topic-columns {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.col-sources {
+  overflow-y: auto;
+  padding: 14px 18px;
+  border-right: 1px solid var(--border);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.col-notes {
+  overflow-y: auto;
+  padding: 14px 16px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.col-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* ── Buttons ────────────────────────────────────────────────── */
+button {
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 14px;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+  font-family: inherit;
+}
+button:hover { opacity: 0.85; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 5px 10px;
+}
+.btn-ghost:hover { color: var(--text); border-color: var(--text-dim); }
+.btn-sm { padding: 4px 9px; font-size: 12px; }
+.btn-icon { background: none; border: none; color: var(--text-dim); padding: 3px 6px; font-size: 14px; line-height: 1; }
+.btn-icon:hover { color: var(--danger); opacity: 1; }
+.btn-danger-ghost { background: transparent; border: 1px solid transparent; color: var(--text-dim); padding: 5px 8px; font-size: 12px; }
+.btn-danger-ghost:hover { color: var(--danger); border-color: var(--danger); opacity: 1; }
+
+/* ── Add source form ────────────────────────────────────────── */
+.add-source-form {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 11px 12px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.add-form-row { display: flex; gap: 6px; }
+.add-status { font-size: 11px; min-height: 12px; }
+.add-status.ok { color: var(--success); }
+.add-status.error { color: var(--danger); }
+
+/* ── Tag chip input ─────────────────────────────────────────── */
+.tag-input-wrap { position: relative; }
+
+.tag-input-box {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  padding: 4px 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: text;
+  min-height: 30px;
+}
+.tag-input-box:focus-within { border-color: var(--accent); }
+.tag-input-box input {
+  border: none;
+  padding: 1px 3px;
+  background: transparent;
+  color: var(--text);
+  flex: 1;
+  min-width: 60px;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--accent-dim);
+  color: var(--text);
+  border-radius: 3px;
+  padding: 1px 6px;
+  font-size: 11px;
+}
+.tag-chip button { background: none; border: none; color: var(--text-dim); padding: 0; font-size: 10px; cursor: pointer; }
+
+.tag-suggestions {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: 0; right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  z-index: 100;
+  max-height: 120px;
+  overflow-y: auto;
+}
+.tag-sugg-item { padding: 6px 10px; cursor: pointer; font-size: 12px; }
+.tag-sugg-item:hover { background: var(--border); }
+
+/* ── Source rows ────────────────────────────────────────────── */
+.source-row {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 6px;
+  overflow: hidden;
+  transition: border-color 0.1s;
+}
+.source-row.expanded { border-color: var(--accent-dim); }
+
+.source-row-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 9px 11px;
+  cursor: pointer;
+  transition: background 0.1s;
+  background: var(--surface);
+}
+.source-row-main:hover { background: var(--border); }
+
+.source-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; line-height: 1; }
+
+.source-info { flex: 1; min-width: 0; }
+
+.source-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 3px;
+}
+
+.source-name {
+  font-size: 13px;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.status-badge {
+  font-size: 10px;
+  border-radius: 3px;
+  padding: 1px 5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.status-done    { background: #172a1e; color: var(--success); }
+.status-pending { background: #26200e; color: var(--warning); }
+.status-error   { background: #281016; color: var(--danger); }
+
+.source-meta-row {
+  font-size: 11px;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.tag-pill {
+  background: var(--accent-dim);
+  color: var(--text);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.source-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.expand-arrow { font-size: 9px; color: var(--text-dim); }
+
+/* ── Source expand ──────────────────────────────────────────── */
+.source-expand {
+  border-top: 1px solid var(--border);
+  padding: 10px 11px 10px 32px;
+  background: var(--bg);
+}
+
+.outline-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.outline-row:last-child { border-bottom: none; }
+.outline-chapter-name { flex: 1; color: var(--text); }
+.outline-chapter-words { color: var(--text-dim); font-size: 11px; white-space: nowrap; }
+
+.expand-footer { margin-top: 8px; }
+
+/* ── Note form ──────────────────────────────────────────────── */
+.new-note-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 9px 11px;
+  margin-bottom: 10px;
+}
+
+.new-note-wrap textarea {
+  width: 100%;
+  min-height: 68px;
+  resize: vertical;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  line-height: 1.5;
+}
+.new-note-wrap textarea::placeholder { color: var(--text-dim); }
+
+.note-form-footer {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px solid var(--border);
+}
+
+.source-select {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 11px;
+  font-family: inherit;
+  padding: 4px 6px;
+  outline: none;
+  min-width: 0;
+}
+.source-select:focus { border-color: var(--accent); }
+
+/* ── Note cards ─────────────────────────────────────────────── */
+.note-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 9px 11px;
+  margin-bottom: 6px;
+  background: var(--surface);
+}
+.note-card.editing { border-color: var(--accent); }
+
+.note-meta { font-size: 11px; color: var(--text-dim); margin-bottom: 5px; }
+
+.note-body {
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  cursor: pointer;
+  color: var(--text);
+}
+.note-body:hover { color: var(--accent); }
+
+.note-edit-textarea {
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  padding: 7px 9px;
+  outline: none;
+}
+.note-edit-textarea:focus { border-color: var(--accent); }
+
+.note-actions {
+  display: flex;
+  gap: 5px;
+  margin-top: 6px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+/* ── Modal ──────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  width: 400px;
+  max-width: 96vw;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.modal-body {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.modal-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+/* ── Global search modal ────────────────────────────────────── */
+.gsearch-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  width: 620px;
+  max-width: 96vw;
+  max-height: 68vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.gsearch-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 500;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.gsearch-body {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.gsearch-group { padding: 11px 16px; border-bottom: 1px solid var(--border); }
+.gsearch-group:last-child { border-bottom: none; }
+.gsearch-topic { font-size: 11px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; color: var(--accent); margin-bottom: 7px; cursor: pointer; }
+.gsearch-topic:hover { text-decoration: underline; }
+
+/* ── Inputs ─────────────────────────────────────────────────── */
+input[type="text"] {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 7px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  width: 100%;
+}
+input[type="text"]:focus { border-color: var(--accent); }
+input[type="text"]::placeholder { color: var(--text-dim); }
+
+/* ── Misc ───────────────────────────────────────────────────── */
+.empty {
+  color: var(--text-dim);
+  font-size: 12px;
+  padding: 14px 0;
+  text-align: center;
+}
+
+.spinner { display: inline-block; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="header-left">
-    <h1>Library Digest</h1>
-    <span id="breadcrumb" class="breadcrumb hidden">
-      <span class="sep">/</span>
-      <span id="topic-crumb" class="topic-crumb"></span>
-    </span>
-  </div>
-  <div class="header-center">
-    <div class="search-wrap">
-      <span class="search-icon-hdr">🔍</span>
-      <input type="text" id="global-search" placeholder="Search all topics…" oninput="onGlobalSearch()" />
-    </div>
-  </div>
-  <div class="header-right">
-    <button class="btn-ghost hidden" id="back-btn" onclick="showTopicsList()">← Topics</button>
-  </div>
-</header>
+<div class="app">
 
-<div id="app">
+  <!-- ── Sidebar ─────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">Library Digest</div>
 
-  <!-- ── Topics list ─────────────────────────────── -->
-  <div id="view-topics" class="view">
-    <div class="view-toolbar">
-      <h2>Your Topics</h2>
-      <button class="btn-primary" onclick="toggleNewTopicForm(true)">+ New Topic</button>
+    <div class="sidebar-search-wrap">
+      <input type="text" id="global-search" class="sidebar-search"
+        placeholder="Search all topics…" oninput="onGlobalSearch()" />
     </div>
-    <div id="new-topic-form" class="new-topic-form hidden">
-      <input type="text" id="new-topic-name" placeholder="Topic name…" onkeydown="if(event.key==='Enter')submitNewTopic()" />
-      <input type="text" id="new-topic-desc" placeholder="Description (optional)" onkeydown="if(event.key==='Enter')submitNewTopic()" />
-      <div class="form-actions">
-        <button class="btn-primary" onclick="submitNewTopic()">Create</button>
-        <button class="btn-ghost" onclick="toggleNewTopicForm(false)">Cancel</button>
+
+    <div class="sidebar-label">Topics</div>
+
+    <nav id="sidebar-nav" class="sidebar-nav">
+      <div class="empty" style="padding:6px 8px;"><span class="spinner">⏳</span></div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="btn-new-topic" onclick="openNewTopicModal()">+ New topic</button>
+    </div>
+  </aside>
+
+  <!-- ── Main ────────────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- Home state -->
+    <div id="view-home">
+      <div class="home-state">
+        <div class="home-title">Library Digest</div>
+        <div class="home-sub">Select a topic from the sidebar, or create one to get started.</div>
+        <button class="btn-primary" onclick="openNewTopicModal()">+ New topic</button>
       </div>
     </div>
-    <div id="topics-list"><div class="empty"><span class="spinner">⏳</span> Loading…</div></div>
-  </div>
 
-  <!-- ── Topic detail ────────────────────────────── -->
-  <div id="view-topic" class="view hidden">
-    <div class="topic-detail-toolbar">
-      <span id="topic-source-count" class="breadcrumb"></span>
-      <button class="btn-ghost" onclick="openTagsDrawer()">🏷 Tags</button>
-    </div>
-    <div class="topic-layout">
+    <!-- Topic view -->
+    <div id="view-topic" class="hidden">
 
-      <!-- Sources pane -->
-      <div class="pane">
-        <div class="pane-header">
-          <span class="pane-title">Sources</span>
+      <div class="topic-header">
+        <div class="topic-header-left">
+          <div class="topic-name" id="topic-name"></div>
+          <div class="topic-description" id="topic-desc"></div>
         </div>
-        <div id="sources-list"><div class="empty">No sources yet.</div></div>
-        <div class="add-form">
-          <input type="text" id="add-url" placeholder="URL or absolute file path…" />
-          <div style="position:relative">
-            <div class="tag-input-box" id="tag-input-box" onclick="document.getElementById('tag-text-input').focus()">
-              <div id="tag-chips-container"></div>
-              <input type="text" id="tag-text-input" placeholder="Add tags…" autocomplete="off"
-                oninput="onTagTextInput()" onkeydown="onTagKeydown(event)" onblur="hideTagSuggestions()" />
+        <div class="topic-header-right">
+          <input type="text" id="topic-search" class="topic-search-input"
+            placeholder="Search in topic…" oninput="onTopicSearch()" />
+          <button class="btn-danger-ghost" onclick="confirmDeleteTopic()">Delete</button>
+        </div>
+      </div>
+
+      <div id="tag-filter-bar" class="tag-filter-bar hidden">
+        <span class="filter-label">Filter</span>
+        <div id="tag-filter-pills" style="display:flex; gap:5px; flex-wrap:wrap;"></div>
+      </div>
+
+      <div id="topic-search-panel" class="search-results-panel hidden">
+        <div class="search-panel-header">
+          <span id="topic-search-label"></span>
+          <button class="btn-ghost btn-sm" onclick="closeTopicSearch()">✕ Close</button>
+        </div>
+        <div id="topic-search-body"></div>
+      </div>
+
+      <div class="topic-columns">
+
+        <!-- Sources column -->
+        <div class="col-sources">
+          <div class="col-header">
+            <span class="col-title">Sources</span>
+            <button class="btn-ghost btn-sm" id="toggle-add-btn" onclick="toggleAddForm()">+ Add</button>
+          </div>
+
+          <div id="add-source-form" class="add-source-form hidden">
+            <input type="text" id="add-url" placeholder="URL or absolute file path…"
+              onkeydown="if(event.key==='Enter')submitIngest()" />
+            <div class="tag-input-wrap">
+              <div class="tag-input-box" id="tag-input-box"
+                onclick="document.getElementById('tag-text').focus()">
+                <div id="tag-chips"></div>
+                <input type="text" id="tag-text" placeholder="Add tags…" autocomplete="off"
+                  oninput="onTagInput()" onkeydown="onTagKeydown(event)" onblur="hideTagSugg()" />
+              </div>
+              <div id="tag-sugg" class="tag-suggestions hidden"></div>
             </div>
-            <div id="tag-suggestions" class="tag-suggestions hidden"></div>
+            <div class="add-form-row">
+              <button class="btn-primary btn-sm" id="add-btn" onclick="submitIngest()">Add source</button>
+              <button class="btn-ghost btn-sm" onclick="toggleAddForm()">Cancel</button>
+            </div>
+            <div id="add-status" class="add-status"></div>
           </div>
-          <div class="form-row">
-            <button class="btn-primary" id="add-btn" onclick="submitIngest()">+ Add Source</button>
+
+          <div id="sources-list"></div>
+        </div>
+
+        <!-- Notes column -->
+        <div class="col-notes" id="col-notes">
+          <div class="col-header">
+            <span class="col-title">Notes</span>
           </div>
-          <div class="add-status" id="add-status"></div>
-        </div>
-      </div>
 
-      <!-- Notes pane -->
-      <div class="pane">
-        <div class="pane-header">
-          <span class="pane-title">Notes</span>
-        </div>
-        <div class="add-form" style="margin-top:0; margin-bottom:16px;">
-          <textarea id="new-note-body" placeholder="Capture an insight, question, or summary…" rows="3"></textarea>
-          <button class="btn-primary" onclick="submitNote()" style="align-self:flex-start">Save Note</button>
-        </div>
-        <div id="notes-list"><div class="empty">No notes yet.</div></div>
-      </div>
+          <div class="new-note-wrap">
+            <textarea id="new-note-body"
+              placeholder="Capture an insight, question, or summary…"></textarea>
+            <div class="note-form-footer">
+              <select id="note-source-select" class="source-select"></select>
+              <button class="btn-primary btn-sm" onclick="submitNote()">Save</button>
+            </div>
+          </div>
 
+          <div id="notes-list"></div>
+        </div>
+
+      </div>
     </div>
-  </div>
 
+  </main>
 </div>
 
-<!-- Tags drawer -->
-<div id="drawer-overlay" class="overlay hidden" onclick="closeTagsDrawer()"></div>
-<div id="tags-drawer" class="drawer hidden">
-  <div class="drawer-header">
-    <span>Tags</span>
-    <button class="btn-ghost" onclick="closeTagsDrawer()">✕</button>
+<!-- ── New topic modal ──────────────────────────────────────── -->
+<div id="new-topic-modal" class="modal-overlay hidden"
+  onclick="if(event.target===this)closeNewTopicModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <span>New topic</span>
+      <button class="btn-icon" onclick="closeNewTopicModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="text" id="new-topic-name" placeholder="Topic name…"
+        onkeydown="if(event.key==='Enter')submitNewTopic()" />
+      <input type="text" id="new-topic-desc" placeholder="Description (optional)"
+        onkeydown="if(event.key==='Enter')submitNewTopic()" />
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeNewTopicModal()">Cancel</button>
+      <button class="btn-primary" onclick="submitNewTopic()">Create topic</button>
+    </div>
   </div>
-  <div id="tags-drawer-list"></div>
 </div>
 
-<!-- Search overlay -->
-<div id="search-overlay" class="search-overlay hidden" onclick="if(event.target===this)closeSearch()">
-  <div class="search-results-panel">
-    <div class="search-results-header">
-      <span id="search-label"></span>
-      <button class="btn-ghost" onclick="closeSearch()">✕</button>
+<!-- ── Global search modal ──────────────────────────────────── -->
+<div id="gsearch-modal" class="modal-overlay hidden"
+  onclick="if(event.target===this)closeGlobalSearch()">
+  <div class="gsearch-modal">
+    <div class="gsearch-header">
+      <span id="gsearch-label"></span>
+      <button class="btn-ghost btn-sm" onclick="closeGlobalSearch()">✕</button>
     </div>
-    <div id="search-results-content"><div class="empty">Searching…</div></div>
+    <div class="gsearch-body" id="gsearch-body">
+      <div class="empty"><span class="spinner">⏳</span> Searching…</div>
+    </div>
   </div>
 </div>
 
 <script>
-const API = (location.protocol !== 'file:') ? '' : 'http://localhost:8000';
+const API = location.protocol !== 'file:' ? '' : 'http://localhost:8000';
 
 // ── State ──────────────────────────────────────────────────────────────────
-const state = {
+const S = {
   topics: [],
-  currentTopic: null,   // full topic object
+  currentTopic: null,
   sources: [],
   notes: [],
   tags: [],
-  pendingTags: [],      // tags being added to current ingest form
+  pendingTags: [],
+  activeTagFilters: new Set(),
+  expandedSources: new Set(),
+  sourceOutlines: {},   // sourceId → {chapters:[]} | 'loading' | null (error)
+  addFormOpen: false,
   searchTimer: null,
 };
 
-// ── Boot ───────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', loadTopics);
-
-// ── API ────────────────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────
 async function apiFetch(path, opts = {}) {
   const res = await fetch(API + path, opts);
   if (!res.ok) {
-    const body = await res.text();
+    const txt = await res.text();
     let msg;
-    try { msg = JSON.parse(body).detail || body; } catch { msg = body; }
+    try { msg = JSON.parse(txt).detail || txt; } catch { msg = txt; }
     throw new Error(msg);
   }
   return res.json();
@@ -419,185 +949,299 @@ async function apiFetch(path, opts = {}) {
 
 function esc(s) {
   return String(s ?? '')
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function timeAgo(iso) {
   if (!iso) return '';
   const d = Math.floor((Date.now() - new Date(iso)) / 1000);
   if (d < 60) return 'just now';
-  if (d < 3600) return `${Math.floor(d/60)}m ago`;
-  if (d < 86400) return `${Math.floor(d/3600)}h ago`;
+  if (d < 3600) return `${Math.floor(d / 60)}m ago`;
+  if (d < 86400) return `${Math.floor(d / 3600)}h ago`;
   return new Date(iso).toLocaleDateString();
 }
 
-// ── Navigation ─────────────────────────────────────────────────────────────
-function showTopicsList() {
-  document.getElementById('view-topics').classList.remove('hidden');
-  document.getElementById('view-topic').classList.add('hidden');
-  document.getElementById('back-btn').classList.add('hidden');
-  document.getElementById('breadcrumb').classList.add('hidden');
-  state.currentTopic = null;
-  loadTopics();
+function postJSON(path, body) {
+  return apiFetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
 }
 
-async function showTopicView(slug) {
-  document.getElementById('view-topics').classList.add('hidden');
-  document.getElementById('view-topic').classList.remove('hidden');
-  document.getElementById('back-btn').classList.remove('hidden');
-  document.getElementById('breadcrumb').classList.remove('hidden');
-  await loadTopic(slug);
-}
+// ── Boot ───────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => loadTopics());
 
 // ── Topics list ────────────────────────────────────────────────────────────
 async function loadTopics() {
   try {
-    state.topics = await apiFetch('/topics');
-    renderTopics();
-  } catch (e) {
-    document.getElementById('topics-list').innerHTML =
-      `<div class="empty">Could not load topics: ${esc(e.message)}</div>`;
+    S.topics = await apiFetch('/topics');
+  } catch {
+    S.topics = [];
   }
+  renderSidebar();
 }
 
-function renderTopics() {
-  const el = document.getElementById('topics-list');
-  if (!state.topics.length) {
-    el.innerHTML = '<div class="empty">No topics yet. Create one to get started.</div>';
+function renderSidebar() {
+  const nav = document.getElementById('sidebar-nav');
+  if (!S.topics.length) {
+    nav.innerHTML = '<div class="empty" style="padding:6px 8px">No topics yet.</div>';
     return;
   }
-  el.innerHTML = state.topics.map(t => `
-    <div class="topic-card" onclick="showTopicView('${esc(t.slug)}')">
-      <div class="topic-card-info">
-        <div class="topic-card-name">${esc(t.name)}</div>
-        ${t.description ? `<div class="topic-card-desc">${esc(t.description)}</div>` : ''}
-        <div class="topic-card-stats">${t.source_count} sources · ${t.total_chunks.toLocaleString()} chunks</div>
-      </div>
-      <button class="btn-danger-sm" onclick="event.stopPropagation(); confirmDeleteTopic('${esc(t.slug)}', '${esc(t.name)}')">Delete</button>
+  nav.innerHTML = S.topics.map(t => `
+    <div class="nav-item ${S.currentTopic?.slug === t.slug ? 'active' : ''}"
+        onclick="openTopic('${esc(t.slug)}')">
+      <div class="nav-dot"></div>
+      <span class="nav-name">${esc(t.name)}</span>
+      <span class="nav-count">${t.source_count}</span>
     </div>
   `).join('');
 }
 
-function toggleNewTopicForm(open) {
-  document.getElementById('new-topic-form').classList.toggle('hidden', !open);
-  if (open) document.getElementById('new-topic-name').focus();
+// ── New topic modal ────────────────────────────────────────────────────────
+function openNewTopicModal() {
+  document.getElementById('new-topic-modal').classList.remove('hidden');
+  document.getElementById('new-topic-name').focus();
+}
+
+function closeNewTopicModal() {
+  document.getElementById('new-topic-modal').classList.add('hidden');
+  document.getElementById('new-topic-name').value = '';
+  document.getElementById('new-topic-desc').value = '';
 }
 
 async function submitNewTopic() {
   const name = document.getElementById('new-topic-name').value.trim();
   if (!name) return;
-  const desc = document.getElementById('new-topic-desc').value.trim();
+  const description = document.getElementById('new-topic-desc').value.trim();
   try {
-    await apiFetch('/topics', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, description: desc }),
-    });
-    document.getElementById('new-topic-name').value = '';
-    document.getElementById('new-topic-desc').value = '';
-    toggleNewTopicForm(false);
-    loadTopics();
+    const topic = await postJSON('/topics', { name, description });
+    closeNewTopicModal();
+    await loadTopics();
+    openTopic(topic.slug);
   } catch (e) {
     alert(e.message);
   }
 }
 
-async function confirmDeleteTopic(slug, name) {
-  if (!confirm(`Delete topic "${name}" and all its sources, notes, and embeddings?\nThis cannot be undone.`)) return;
-  await apiFetch(`/topics/${slug}`, { method: 'DELETE' });
-  loadTopics();
+// ── Open topic ─────────────────────────────────────────────────────────────
+async function openTopic(slug) {
+  document.getElementById('view-home').classList.add('hidden');
+  document.getElementById('view-topic').classList.remove('hidden');
+
+  // Reset per-topic state
+  S.expandedSources = new Set();
+  S.sourceOutlines = {};
+  S.activeTagFilters = new Set();
+  S.pendingTags = [];
+  S.addFormOpen = false;
+  document.getElementById('add-source-form').classList.add('hidden');
+  document.getElementById('toggle-add-btn').textContent = '+ Add';
+  document.getElementById('add-url').value = '';
+  setAddStatus('', '');
+  closeTopicSearch();
+  renderTagChips();
+
+  await refreshTopic(slug);
 }
 
-// ── Topic view ─────────────────────────────────────────────────────────────
-async function loadTopic(slug) {
+async function refreshTopic(slug) {
   const data = await apiFetch(`/topics/${slug}/digest`);
-  state.currentTopic = data.topic;
-  state.sources = data.sources;
-  state.notes = data.notes;
-  state.tags = data.tags;
-  state.pendingTags = [];
+  S.currentTopic = data.topic;
+  S.sources = data.sources;
+  S.notes = data.notes;
+  S.tags = data.tags;
 
-  document.getElementById('topic-crumb').textContent = data.topic.name;
-  document.getElementById('topic-source-count').textContent =
-    `${data.sources.length} source${data.sources.length !== 1 ? 's' : ''} · ${data.notes.length} note${data.notes.length !== 1 ? 's' : ''}`;
+  document.getElementById('topic-name').textContent = data.topic.name;
+  document.getElementById('topic-desc').textContent = data.topic.description || '';
 
+  renderSidebar();
+  renderTagFilterBar();
   renderSources();
   renderNotes();
-  renderTagChips();
+  refreshNoteSourceSelect();
+}
+
+async function confirmDeleteTopic() {
+  if (!S.currentTopic) return;
+  if (!confirm(`Delete "${S.currentTopic.name}" and all its sources, notes, and embeddings?\nThis cannot be undone.`)) return;
+  await apiFetch(`/topics/${S.currentTopic.slug}`, { method: 'DELETE' });
+  S.currentTopic = null;
+  await loadTopics();
+  document.getElementById('view-topic').classList.add('hidden');
+  document.getElementById('view-home').classList.remove('hidden');
+}
+
+// ── Tag filter bar ─────────────────────────────────────────────────────────
+function renderTagFilterBar() {
+  const bar = document.getElementById('tag-filter-bar');
+  const pills = document.getElementById('tag-filter-pills');
+  if (!S.tags.length) { bar.classList.add('hidden'); return; }
+  bar.classList.remove('hidden');
+  pills.innerHTML = S.tags.map(t => `
+    <button class="filter-tag ${S.activeTagFilters.has(t.name) ? 'active' : ''}"
+        onclick="toggleTagFilter('${esc(t.name)}')">
+      ${esc(t.name)} <span style="opacity:0.55">${t.source_count}</span>
+    </button>
+  `).join('');
+}
+
+function toggleTagFilter(name) {
+  if (S.activeTagFilters.has(name)) S.activeTagFilters.delete(name);
+  else S.activeTagFilters.add(name);
+  renderTagFilterBar();
+  renderSources();
 }
 
 // ── Sources ────────────────────────────────────────────────────────────────
+function visibleSources() {
+  if (!S.activeTagFilters.size) return S.sources;
+  return S.sources.filter(s => (s.tags || []).some(t => S.activeTagFilters.has(t)));
+}
+
 function renderSources() {
   const el = document.getElementById('sources-list');
-  if (!state.sources.length) {
-    el.innerHTML = '<div class="empty">No sources yet. Add one below.</div>';
+  const list = visibleSources();
+  if (!list.length) {
+    el.innerHTML = S.sources.length
+      ? '<div class="empty">No sources match the active filter.</div>'
+      : '<div class="empty">No sources yet.</div>';
     return;
   }
-  const icons = { pdf:'📄', epub:'📄', web:'🌐', video:'🎬', text:'📝' };
-  el.innerHTML = state.sources.map(s => {
-    const icon = icons[s.source_type] || '📎';
-    const statusLabel = { done: '✓ done', pending: '⏳ indexing', error: '✗ error' }[s.ingest_status] || s.ingest_status;
-    const statusClass = `status-${s.ingest_status}`;
-    const tags = (s.tags || []).map(t => `<span class="tag-pill">${esc(t)}</span>`).join('');
-    return `
-      <div class="source-card">
-        <div class="source-card-top">
-          <div class="source-info">
-            <div class="source-title-row">
-              <span>${icon}</span>
-              <span class="source-title">${esc(s.source_title || s.source_ref)}</span>
-              <span class="status-badge ${statusClass}">${statusLabel}</span>
-            </div>
-            ${s.ingest_status === 'error' ? `<div class="source-meta" style="color:var(--danger)">${esc(s.error_message)}</div>` : ''}
-            <div class="source-meta">${s.chunk_count.toLocaleString()} chunks · ${esc(s.source_ref)}</div>
-            ${tags ? `<div class="tag-pills">${tags}</div>` : ''}
-          </div>
-          <button class="btn-danger-sm" onclick="deleteSource('${esc(s.source_ref)}')">delete</button>
+  el.innerHTML = list.map(s => buildSourceRow(s)).join('');
+}
+
+const SOURCE_ICONS = { pdf: '📄', epub: '📖', web: '🌐', video: '🎬', text: '📝' };
+const STATUS_LABELS = { done: '✓ done', pending: '⏳ indexing', error: '✗ error' };
+
+function buildSourceRow(s) {
+  const icon = SOURCE_ICONS[s.source_type] || '📎';
+  const statusLabel = STATUS_LABELS[s.ingest_status] ?? s.ingest_status;
+  const tags = (s.tags || []).map(t => `<span class="tag-pill">${esc(t)}</span>`).join('');
+  const expanded = S.expandedSources.has(s.id);
+
+  let expandHtml = '';
+  if (expanded) {
+    const outline = S.sourceOutlines[s.id];
+    let bodyHtml;
+    if (outline === 'loading') {
+      bodyHtml = '<div class="empty" style="padding:6px 0"><span class="spinner">⏳</span> Loading chapters…</div>';
+    } else if (!outline || !outline.chapters?.length) {
+      bodyHtml = '<div class="empty" style="padding:6px 0; text-align:left">No chapter structure found.</div>';
+    } else {
+      bodyHtml = `<div>${outline.chapters.map(c => `
+        <div class="outline-row">
+          <span class="outline-chapter-name">${esc(c.name)}</span>
+          <span class="outline-chapter-words">${c.word_count.toLocaleString()} words</span>
+        </div>`).join('')}</div>`;
+    }
+    expandHtml = `
+      <div class="source-expand">
+        ${bodyHtml}
+        <div class="expand-footer">
+          <button class="btn-ghost btn-sm"
+              data-ref="${esc(s.source_ref)}"
+              data-title="${esc(s.source_title || s.source_ref)}"
+              onclick="prefillNoteSource(this.dataset.ref, this.dataset.title)">
+            + Add linked note
+          </button>
         </div>
       </div>`;
-  }).join('');
+  }
+
+  return `
+    <div class="source-row${expanded ? ' expanded' : ''}" id="src-${s.id}">
+      <div class="source-row-main" onclick="toggleSource(${s.id})">
+        <div class="source-icon">${icon}</div>
+        <div class="source-info">
+          <div class="source-name-row">
+            <span class="source-name">${esc(s.source_title || s.source_ref)}</span>
+            <span class="status-badge status-${s.ingest_status}">${statusLabel}</span>
+          </div>
+          ${s.ingest_status === 'error'
+            ? `<div class="source-meta-row" style="color:var(--danger)">${esc(s.error_message)}</div>`
+            : ''}
+          <div class="source-meta-row">
+            <span>${s.chunk_count.toLocaleString()} chunks</span>
+            ${tags}
+          </div>
+        </div>
+        <div class="source-actions">
+          <span class="expand-arrow">${expanded ? '▲' : '▼'}</span>
+          <button class="btn-icon" title="Delete source"
+              data-ref="${esc(s.source_ref)}"
+              onclick="event.stopPropagation(); deleteSource(this.dataset.ref)">×</button>
+        </div>
+      </div>
+      ${expandHtml}
+    </div>`;
+}
+
+async function toggleSource(sourceId) {
+  if (S.expandedSources.has(sourceId)) {
+    S.expandedSources.delete(sourceId);
+    renderSources();
+    return;
+  }
+  S.expandedSources.add(sourceId);
+  if (!(sourceId in S.sourceOutlines)) {
+    S.sourceOutlines[sourceId] = 'loading';
+    renderSources();
+    try {
+      const data = await apiFetch(`/topics/${S.currentTopic.slug}/sources/${sourceId}/outline`);
+      S.sourceOutlines[sourceId] = data;
+    } catch {
+      S.sourceOutlines[sourceId] = null;
+    }
+  }
+  renderSources();
 }
 
 async function deleteSource(sourceRef) {
-  if (!confirm(`Delete "${sourceRef}"?\nThis removes all its chunks from the index.`)) return;
-  await apiFetch(`/topics/${state.currentTopic.slug}/sources`, {
+  if (!confirm('Delete this source and all its chunks?')) return;
+  await apiFetch(`/topics/${S.currentTopic.slug}/sources`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ source_ref: sourceRef }),
   });
-  await refreshTopicData();
+  await refreshTopic(S.currentTopic.slug);
+}
+
+// ── Add source form ────────────────────────────────────────────────────────
+function toggleAddForm() {
+  S.addFormOpen = !S.addFormOpen;
+  document.getElementById('add-source-form').classList.toggle('hidden', !S.addFormOpen);
+  document.getElementById('toggle-add-btn').textContent = S.addFormOpen ? '− Cancel' : '+ Add';
+  if (S.addFormOpen) document.getElementById('add-url').focus();
 }
 
 async function submitIngest() {
   const url = document.getElementById('add-url').value.trim();
-  if (!url) { setStatus('Enter a URL or file path.', 'error'); return; }
+  if (!url) { setAddStatus('Enter a URL or file path.', 'error'); return; }
 
   const btn = document.getElementById('add-btn');
-  const tags = [...state.pendingTags];
+  const tags = [...S.pendingTags];
   btn.disabled = true;
   btn.textContent = '⏳ Indexing…';
-  setStatus('', '');
+  setAddStatus('', '');
 
   try {
-    const src = await apiFetch(`/topics/${state.currentTopic.slug}/ingest`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path_or_url: url, tags }),
-    });
-    setStatus(`✓ "${src.source_title}" — ${src.chunk_count} chunks added.`, 'ok');
+    const src = await postJSON(`/topics/${S.currentTopic.slug}/ingest`, { path_or_url: url, tags });
+    setAddStatus(`✓ "${src.source_title}" — ${src.chunk_count} chunks added.`, 'ok');
     document.getElementById('add-url').value = '';
-    state.pendingTags = [];
+    S.pendingTags = [];
     renderTagChips();
-    await refreshTopicData();
+    await refreshTopic(S.currentTopic.slug);
   } catch (e) {
-    setStatus(e.message, 'error');
+    setAddStatus(e.message, 'error');
   } finally {
     btn.disabled = false;
-    btn.textContent = '+ Add Source';
+    btn.textContent = 'Add source';
   }
 }
 
-function setStatus(msg, type) {
+function setAddStatus(msg, type) {
   const el = document.getElementById('add-status');
   el.textContent = msg;
   el.className = 'add-status' + (type ? ` ${type}` : '');
@@ -605,73 +1249,89 @@ function setStatus(msg, type) {
 
 // ── Tag chip input ─────────────────────────────────────────────────────────
 function renderTagChips() {
-  const container = document.getElementById('tag-chips-container');
-  container.innerHTML = state.pendingTags.map(t => `
-    <span class="tag-chip">${esc(t)}<button onclick="removeTag('${esc(t)}')">✕</button></span>
-  `).join('');
+  document.getElementById('tag-chips').innerHTML = S.pendingTags.map(t =>
+    `<span class="tag-chip">${esc(t)}<button type="button" onclick="removeTag('${esc(t)}')">✕</button></span>`
+  ).join('');
 }
 
 function addTag(name) {
   name = name.trim().toLowerCase().replace(/\s+/g, '-');
-  if (!name || state.pendingTags.includes(name)) return;
-  state.pendingTags.push(name);
+  if (!name || S.pendingTags.includes(name)) return;
+  S.pendingTags.push(name);
   renderTagChips();
-  document.getElementById('tag-text-input').value = '';
-  hideTagSuggestions();
+  document.getElementById('tag-text').value = '';
+  hideTagSugg();
 }
 
 function removeTag(name) {
-  state.pendingTags = state.pendingTags.filter(t => t !== name);
+  S.pendingTags = S.pendingTags.filter(t => t !== name);
   renderTagChips();
 }
 
-function onTagTextInput() {
-  const val = document.getElementById('tag-text-input').value;
+function onTagInput() {
+  const val = document.getElementById('tag-text').value;
   if (val.endsWith(',')) { addTag(val.slice(0, -1)); return; }
-  const suggestions = state.tags
-    .map(t => t.name)
-    .filter(n => n.includes(val.toLowerCase()) && !state.pendingTags.includes(n));
-  const el = document.getElementById('tag-suggestions');
-  if (val && suggestions.length) {
-    el.innerHTML = suggestions.map(n =>
-      `<div class="tag-suggestion" onmousedown="addTag('${esc(n)}')">${esc(n)}</div>`
+  const matches = S.tags.map(t => t.name)
+    .filter(n => n.includes(val.toLowerCase()) && !S.pendingTags.includes(n));
+  const el = document.getElementById('tag-sugg');
+  if (val && matches.length) {
+    el.innerHTML = matches.map(n =>
+      `<div class="tag-sugg-item" onmousedown="addTag('${esc(n)}')">${esc(n)}</div>`
     ).join('');
     el.classList.remove('hidden');
   } else {
-    hideTagSuggestions();
+    hideTagSugg();
   }
 }
 
 function onTagKeydown(e) {
   if (e.key === 'Enter' || e.key === ',') {
     e.preventDefault();
-    addTag(document.getElementById('tag-text-input').value);
-  } else if (e.key === 'Backspace' && !document.getElementById('tag-text-input').value) {
-    state.pendingTags.pop();
+    addTag(document.getElementById('tag-text').value);
+  } else if (e.key === 'Backspace' && !document.getElementById('tag-text').value) {
+    S.pendingTags.pop();
     renderTagChips();
   } else if (e.key === 'Escape') {
-    hideTagSuggestions();
+    hideTagSugg();
   }
 }
 
-function hideTagSuggestions() {
-  setTimeout(() => document.getElementById('tag-suggestions').classList.add('hidden'), 150);
+function hideTagSugg() {
+  setTimeout(() => document.getElementById('tag-sugg').classList.add('hidden'), 150);
 }
 
 // ── Notes ──────────────────────────────────────────────────────────────────
+function refreshNoteSourceSelect() {
+  const select = document.getElementById('note-source-select');
+  const prev = select.value;
+  select.innerHTML = '<option value="">— no source link —</option>' +
+    S.sources
+      .filter(s => s.ingest_status === 'done')
+      .map(s => `<option value="${esc(s.source_ref)}">${esc(s.source_title || s.source_ref)}</option>`)
+      .join('');
+  if (prev) select.value = prev;
+}
+
+function prefillNoteSource(sourceRef, sourceTitle) {
+  const select = document.getElementById('note-source-select');
+  select.value = sourceRef;
+  document.getElementById('new-note-body').focus();
+  document.getElementById('col-notes').scrollTop = 0;
+}
+
 function renderNotes() {
   const el = document.getElementById('notes-list');
-  if (!state.notes.length) {
+  if (!S.notes.length) {
     el.innerHTML = '<div class="empty">No notes yet.</div>';
     return;
   }
-  el.innerHTML = state.notes.map(n => {
-    const srcName = n.source_id
-      ? (state.sources.find(s => s.id === n.source_id)?.source_title || '')
-      : '';
+  el.innerHTML = S.notes.map(n => {
+    const src = n.source_id ? S.sources.find(s => s.id === n.source_id) : null;
     return `
       <div class="note-card" id="note-${n.id}">
-        <div class="note-meta">${timeAgo(n.created_at)}${srcName ? ` · ${esc(srcName)}` : ''}</div>
+        <div class="note-meta">
+          ${timeAgo(n.created_at)}${src ? ` · ${esc(src.source_title || src.source_ref)}` : ''}
+        </div>
         <div class="note-body" onclick="expandNote(${n.id})">${esc(n.body)}</div>
       </div>`;
   }).join('');
@@ -680,179 +1340,134 @@ function renderNotes() {
 async function submitNote() {
   const body = document.getElementById('new-note-body').value.trim();
   if (!body) return;
-  await apiFetch(`/topics/${state.currentTopic.slug}/notes`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ body }),
-  });
+  const source_ref = document.getElementById('note-source-select').value;
+  await postJSON(`/topics/${S.currentTopic.slug}/notes`, { body, source_ref });
   document.getElementById('new-note-body').value = '';
-  await refreshTopicData();
+  document.getElementById('note-source-select').value = '';
+  await refreshTopic(S.currentTopic.slug);
 }
 
 function expandNote(noteId) {
   const card = document.getElementById(`note-${noteId}`);
-  const note = state.notes.find(n => n.id === noteId);
+  const note = S.notes.find(n => n.id === noteId);
   if (!note) return;
   card.classList.add('editing');
   card.innerHTML = `
-    <textarea class="note-edit-area" id="note-edit-${noteId}">${esc(note.body)}</textarea>
+    <textarea class="note-edit-textarea" id="note-edit-${noteId}">${esc(note.body)}</textarea>
     <div class="note-actions">
-      <button class="btn-danger-sm" onclick="deleteNote(${noteId})">Delete</button>
-      <button class="btn-ghost" onclick="cancelNoteEdit(${noteId})">Cancel</button>
-      <button class="btn-primary" onclick="saveNote(${noteId})">Save</button>
+      <button class="btn-icon" title="Delete note" onclick="deleteNote(${noteId})">🗑</button>
+      <button class="btn-ghost btn-sm" onclick="renderNotes()">Cancel</button>
+      <button class="btn-primary btn-sm" onclick="saveNote(${noteId})">Save</button>
     </div>`;
   document.getElementById(`note-edit-${noteId}`).focus();
-}
-
-function cancelNoteEdit(noteId) {
-  renderNotes();
 }
 
 async function saveNote(noteId) {
   const body = document.getElementById(`note-edit-${noteId}`).value.trim();
   if (!body) return;
-  await apiFetch(`/topics/${state.currentTopic.slug}/notes/${noteId}`, {
+  await apiFetch(`/topics/${S.currentTopic.slug}/notes/${noteId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ body }),
   });
-  await refreshTopicData();
+  await refreshTopic(S.currentTopic.slug);
 }
 
 async function deleteNote(noteId) {
   if (!confirm('Delete this note?')) return;
-  await apiFetch(`/topics/${state.currentTopic.slug}/notes/${noteId}`, { method: 'DELETE' });
-  await refreshTopicData();
+  await apiFetch(`/topics/${S.currentTopic.slug}/notes/${noteId}`, { method: 'DELETE' });
+  await refreshTopic(S.currentTopic.slug);
 }
 
-async function refreshTopicData() {
-  const data = await apiFetch(`/topics/${state.currentTopic.slug}/digest`);
-  state.sources = data.sources;
-  state.notes = data.notes;
-  state.tags = data.tags;
-  document.getElementById('topic-source-count').textContent =
-    `${data.sources.length} source${data.sources.length !== 1 ? 's' : ''} · ${data.notes.length} note${data.notes.length !== 1 ? 's' : ''}`;
-  renderSources();
-  renderNotes();
+// ── In-topic search ────────────────────────────────────────────────────────
+function onTopicSearch() {
+  clearTimeout(S.searchTimer);
+  const q = document.getElementById('topic-search').value.trim();
+  if (!q) { closeTopicSearch(); return; }
+  S.searchTimer = setTimeout(() => runTopicSearch(q), 350);
 }
 
-// ── Tags drawer ────────────────────────────────────────────────────────────
-async function openTagsDrawer() {
-  document.getElementById('drawer-overlay').classList.remove('hidden');
-  document.getElementById('tags-drawer').classList.remove('hidden');
-  renderTagsDrawer();
-}
+async function runTopicSearch(query) {
+  if (!S.currentTopic) return;
+  const panel = document.getElementById('topic-search-panel');
+  const body = document.getElementById('topic-search-body');
+  document.getElementById('topic-search-label').textContent = `Results for "${query}"`;
+  panel.classList.remove('hidden');
+  body.innerHTML = '<div class="empty"><span class="spinner">⏳</span> Searching…</div>';
 
-function closeTagsDrawer() {
-  document.getElementById('drawer-overlay').classList.add('hidden');
-  document.getElementById('tags-drawer').classList.add('hidden');
-}
-
-function renderTagsDrawer() {
-  const el = document.getElementById('tags-drawer-list');
-  if (!state.tags.length) {
-    el.innerHTML = '<div class="empty">No tags yet.</div>';
-    return;
+  try {
+    const data = await postJSON('/search', { query, topic: S.currentTopic.slug, top_k: 8 });
+    if (!data.results.length) {
+      body.innerHTML = '<div class="empty">No results found.</div>';
+      return;
+    }
+    body.innerHTML = data.results.map(r => `
+      <div class="search-hit">
+        <div class="search-hit-header">
+          <span class="search-hit-title">${r.kind === 'note' ? '📝 Note' : esc(r.source_title || r.source_ref)}</span>
+          ${r.chapter ? `<span class="search-hit-chapter">· ${esc(r.chapter)}</span>` : ''}
+          <span class="search-hit-score">${(r.score * 100).toFixed(0)}%</span>
+        </div>
+        <div class="search-hit-text">${esc(r.text.slice(0, 220))}${r.text.length > 220 ? '…' : ''}</div>
+      </div>`).join('');
+  } catch (e) {
+    body.innerHTML = `<div class="empty">Error: ${esc(e.message)}</div>`;
   }
-  el.innerHTML = state.tags.map(t => `
-    <div class="tag-row" id="tag-row-${esc(t.name)}">
-      <span class="tag-row-name">${esc(t.name)}</span>
-      <span class="tag-row-count">${t.source_count}</span>
-      <button class="btn-ghost" style="padding:4px 8px;font-size:12px" onclick="startRenameTag('${esc(t.name)}')">Rename</button>
-      <button class="btn-danger-sm" onclick="deleteTagFromDrawer('${esc(t.name)}')">Delete</button>
-    </div>`).join('');
 }
 
-function startRenameTag(name) {
-  const row = document.getElementById(`tag-row-${name}`);
-  row.innerHTML = `
-    <input class="tag-edit-input" id="tag-rename-input" value="${esc(name)}"
-      onkeydown="if(event.key==='Enter')commitRename('${esc(name)}'); if(event.key==='Escape')renderTagsDrawer();" />
-    <button class="btn-primary" style="padding:4px 10px;font-size:12px" onclick="commitRename('${esc(name)}')">Save</button>
-    <button class="btn-ghost" style="padding:4px 8px;font-size:12px" onclick="renderTagsDrawer()">Cancel</button>`;
-  document.getElementById('tag-rename-input').focus();
-}
-
-async function commitRename(oldName) {
-  const newName = document.getElementById('tag-rename-input').value.trim();
-  if (!newName || newName === oldName) { renderTagsDrawer(); return; }
-  await apiFetch(`/topics/${state.currentTopic.slug}/tags/rename`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ old_name: oldName, new_name: newName }),
-  });
-  await refreshTopicData();
-  renderTagsDrawer();
-}
-
-async function deleteTagFromDrawer(name) {
-  const tag = state.tags.find(t => t.name === name);
-  if (tag?.source_count > 0) {
-    if (!confirm(`Tag "${name}" is used by ${tag.source_count} source(s). Delete it anyway?`)) return;
-  }
-  await apiFetch(`/topics/${state.currentTopic.slug}/tags`, {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name }),
-  });
-  await refreshTopicData();
-  renderTagsDrawer();
+function closeTopicSearch() {
+  document.getElementById('topic-search-panel').classList.add('hidden');
+  document.getElementById('topic-search').value = '';
+  document.getElementById('topic-search-body').innerHTML = '';
 }
 
 // ── Global search ──────────────────────────────────────────────────────────
 function onGlobalSearch() {
-  clearTimeout(state.searchTimer);
+  clearTimeout(S.searchTimer);
   const q = document.getElementById('global-search').value.trim();
-  if (!q) { closeSearch(); return; }
-  state.searchTimer = setTimeout(() => runGlobalSearch(q), 350);
+  if (!q) { closeGlobalSearch(); return; }
+  S.searchTimer = setTimeout(() => runGlobalSearch(q), 350);
 }
 
 async function runGlobalSearch(query) {
-  document.getElementById('search-overlay').classList.remove('hidden');
-  document.getElementById('search-label').textContent = `"${query}"`;
-  document.getElementById('search-results-content').innerHTML =
-    '<div class="empty"><span class="spinner">⏳</span> Searching…</div>';
+  const modal = document.getElementById('gsearch-modal');
+  const body = document.getElementById('gsearch-body');
+  document.getElementById('gsearch-label').textContent = `"${query}"`;
+  modal.classList.remove('hidden');
+  body.innerHTML = '<div class="empty"><span class="spinner">⏳</span> Searching…</div>';
 
   try {
-    const data = await apiFetch('/search-all', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, top_k_per_topic: 3 }),
-    });
-    renderSearchResults(data.groups, query);
+    const data = await postJSON('/search-all', { query, top_k_per_topic: 3 });
+    if (!data.groups.length) {
+      body.innerHTML = '<div class="empty">No results found.</div>';
+      return;
+    }
+    body.innerHTML = data.groups.map(g => `
+      <div class="gsearch-group">
+        <div class="gsearch-topic"
+            onclick="closeGlobalSearch(); openTopic('${esc(g.topic.slug)}')">${esc(g.topic.name)} →</div>
+        ${g.results.map(r => `
+          <div class="search-hit">
+            <div class="search-hit-header">
+              <span class="search-hit-title">${r.kind === 'note' ? '📝 Note' : esc(r.source_title || r.source_ref)}</span>
+              <span class="search-hit-score">${(r.score * 100).toFixed(0)}%</span>
+            </div>
+            <div class="search-hit-text">${esc(r.text.slice(0, 180))}${r.text.length > 180 ? '…' : ''}</div>
+          </div>`).join('')}
+      </div>`).join('');
   } catch (e) {
-    document.getElementById('search-results-content').innerHTML =
-      `<div class="empty">Error: ${esc(e.message)}</div>`;
+    body.innerHTML = `<div class="empty">Error: ${esc(e.message)}</div>`;
   }
 }
 
-function renderSearchResults(groups, query) {
-  const el = document.getElementById('search-results-content');
-  if (!groups.length) {
-    el.innerHTML = '<div class="empty">No results found.</div>';
-    return;
-  }
-  el.innerHTML = groups.map(g => `
-    <div class="search-group">
-      <div class="search-group-title" onclick="closeSearch(); showTopicView('${esc(g.topic.slug)}')">${esc(g.topic.name)} →</div>
-      ${g.results.map(r => `
-        <div class="search-hit">
-          <div class="search-hit-header">
-            <span class="search-hit-title">${r.kind === 'note' ? '📝 Note' : esc(r.source_title || r.source_ref)}</span>
-            <span class="search-hit-score">${(r.score * 100).toFixed(0)}%</span>
-          </div>
-          <div class="search-hit-text">${esc(r.text.slice(0, 180))}${r.text.length > 180 ? '…' : ''}</div>
-        </div>`).join('')}
-    </div>`).join('');
-}
-
-function closeSearch() {
-  document.getElementById('search-overlay').classList.add('hidden');
+function closeGlobalSearch() {
+  document.getElementById('gsearch-modal').classList.add('hidden');
   document.getElementById('global-search').value = '';
 }
 
+// ── Keyboard shortcuts ─────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeSearch(); closeTagsDrawer(); }
+  if (e.key === 'Escape') { closeGlobalSearch(); closeTopicSearch(); }
 });
 </script>
 </body>

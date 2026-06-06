@@ -113,6 +113,25 @@ def ingest_source_endpoint(slug: str, req: IngestRequest):
     return db.get_source(t["id"], req.path_or_url)
 
 
+@app.get("/topics/{slug}/sources/{source_id}/outline")
+def get_source_outline(slug: str, source_id: int):
+    t = _topic_or_404(slug)
+    client = store.get_client()
+    collection = store.get_or_create_collection(client, t["slug"])
+    chunks = store.get_chunks_ordered(collection, source_id)
+
+    seen: dict[str, dict] = {}
+    order: list[str] = []
+    for chunk in chunks:
+        ch = chunk["metadata"].get("chapter", "") or "Main"
+        if ch not in seen:
+            seen[ch] = {"name": ch, "word_count": 0}
+            order.append(ch)
+        seen[ch]["word_count"] += len(chunk["text"].split())
+
+    return {"chapters": [seen[c] for c in order]}
+
+
 class DeleteSourceRequest(BaseModel):
     source_ref: str
 

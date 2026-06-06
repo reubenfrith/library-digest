@@ -188,7 +188,8 @@ def extract_video(url: str) -> tuple[str, list[dict]]:
         source_title = video_id
 
     try:
-        transcript = YouTubeTranscriptApi.get_transcript(video_id)
+        api = YouTubeTranscriptApi()
+        transcript = api.fetch(video_id)
     except TranscriptsDisabled:
         raise ValueError(f"Transcripts disabled for video: {video_id}")
     except NoTranscriptFound:
@@ -201,11 +202,11 @@ def extract_video(url: str) -> tuple[str, list[dict]]:
     section_start = 0.0
     section_duration = 0.0
 
-    for entry in transcript:
+    for snippet in transcript:
         if not current_texts:
-            section_start = entry["start"]
-        current_texts.append(entry["text"])
-        section_duration += entry.get("duration", 0)
+            section_start = snippet.start
+        current_texts.append(snippet.text)
+        section_duration += snippet.duration
 
         if section_duration >= 180:
             sections.append({
@@ -215,7 +216,7 @@ def extract_video(url: str) -> tuple[str, list[dict]]:
                 "timestamp_seconds": int(section_start),
             })
             current_texts = []
-            section_start = entry["start"] + entry.get("duration", 0)
+            section_start = snippet.start + snippet.duration
             section_duration = 0.0
 
     if current_texts:
