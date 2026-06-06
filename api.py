@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from typing import Optional
 
@@ -7,20 +6,26 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-import ingest
+import db
 import store
+import ingest as ingest_mod
 
 app = FastAPI(title="Library Digest API")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 UI_PATH = Path(__file__).parent / "ui" / "index.html"
 
+db.init_db()
+
+
+def _topic_or_404(slug: str) -> dict:
+    t = db.get_topic(slug)
+    if not t:
+        raise HTTPException(status_code=404, detail=f"Topic '{slug}' not found")
+    return t
+
+
+# ── UI ────────────────────────────────────────────────────────────────────────
 
 @app.get("/", response_class=HTMLResponse)
 def serve_ui():
@@ -29,92 +34,301 @@ def serve_ui():
     return HTMLResponse(content=UI_PATH.read_text(encoding="utf-8"))
 
 
-@app.get("/libraries")
-def get_libraries():
+# ── Topics ────────────────────────────────────────────────────────────────────
+
+@app.get("/topics")
+def get_topics():
+    return db.list_topics()
+
+
+class CreateTopicRequest(BaseModel):
+    name: str
+    description: str = ""
+
+
+@app.post("/topics", status_code=201)
+def create_topic(req: CreateTopicRequest):
+    try:
+        return db.create_topic(req.name, req.description)
+    except Exception as e:
+        raise HTTPException(status_code=409, detail=str(e))
+
+
+@app.delete("/topics/{slug}")
+def delete_topic(slug: str):
+    t = _topic_or_404(slug)
     client = store.get_client()
-    return store.list_collections(client)
+    store.delete_collection(client, t["slug"])
+    db.delete_topic(t["slug"])
+    return {"deleted": True}
 
 
-@app.get("/libraries/{library}/sources")
-def get_sources(library: str):
-    client = store.get_client()
-    collection = store.get_or_create_collection(client, library)
-    return store.list_sources(collection)
+@app.get("/topics/{slug}/digest")
+def get_digest(slug: str):
+    t = _topic_or_404(slug)
+    return {
+        "topic": t,
+        "sources": db.list_sources(t["id"]),
+        "notes": db.list_notes(t["id"]),
+        "tags": db.list_tags(t["id"]),
+    }
 
 
-@app.get("/libraries/{library}/modules")
-def get_modules(library: str):
-    client = store.get_client()
-    collection = store.get_or_create_collection(client, library)
-    result = collection.get(include=["metadatas"])
-    modules = sorted({
-        m.get("module", "")
-        for m in result["metadatas"]
-        if m.get("module")
-    })
-    return modules
+# ── Sources ───────────────────────────────────────────────────────────────────
+
+@app.get("/topics/{slug}/sources")
+def get_sources(slug: str, tag: str = ""):
+    t = _topic_or_404(slug)
+    return db.list_sources(t["id"], tag_name=tag)
 
 
 class IngestRequest(BaseModel):
     path_or_url: str
-    library: str
-    module: str = ""
+    tags: list[str] = []
 
 
-@app.post("/ingest")
-def ingest_source_endpoint(req: IngestRequest):
+@app.post("/topics/{slug}/ingest")
+def ingest_source_endpoint(slug: str, req: IngestRequest):
+    t = _topic_or_404(slug)
+    client = store.get_client()
+    collection = store.get_or_create_collection(client, t["slug"])
+
+    source_row = db.register_source(t["id"], req.path_or_url)
+
     try:
-        source_title, chunks = ingest.ingest_source(req.path_or_url, req.library, req.module)
+        source_title, chunks = ingest_mod.ingest_source(req.path_or_url, t["slug"], source_row["id"])
     except Exception as e:
+        db.update_source_error(source_row["id"], str(e))
         raise HTTPException(status_code=422, detail=str(e))
 
-    client = store.get_client()
-    collection = store.get_or_create_collection(client, req.library)
-    store.delete_source(collection, req.path_or_url)
+    store.delete_chunks_for_source(collection, source_row["id"])
     store.add_chunks(collection, chunks)
 
-    return {"source_title": source_title, "chunks_added": len(chunks)}
+    source_type = chunks[0]["metadata"]["source_type"] if chunks else ""
+    db.update_source_done(source_row["id"], source_title, source_type, len(chunks))
+
+    if req.tags:
+        db.add_source_tags(source_row["id"], t["id"], req.tags)
+
+    return db.get_source(t["id"], req.path_or_url)
 
 
 class DeleteSourceRequest(BaseModel):
     source_ref: str
 
 
-@app.delete("/libraries/{library}/sources")
-def delete_source_endpoint(library: str, req: DeleteSourceRequest):
+@app.delete("/topics/{slug}/sources")
+def delete_source_endpoint(slug: str, req: DeleteSourceRequest):
+    t = _topic_or_404(slug)
+    source_row = db.get_source(t["id"], req.source_ref)
+    if not source_row:
+        raise HTTPException(status_code=404, detail="Source not found")
     client = store.get_client()
-    collection = store.get_or_create_collection(client, library)
-    store.delete_source(collection, req.source_ref)
+    collection = store.get_or_create_collection(client, t["slug"])
+    store.delete_chunks_for_source(collection, source_row["id"])
+    db.delete_source_record(source_row["id"])
     return {"deleted": True}
 
 
+# ── Tags ──────────────────────────────────────────────────────────────────────
+
+@app.get("/topics/{slug}/tags")
+def get_tags(slug: str):
+    t = _topic_or_404(slug)
+    return db.list_tags(t["id"])
+
+
+class TagSourceRequest(BaseModel):
+    source_ref: str
+    tags: list[str]
+
+
+@app.post("/topics/{slug}/tags/add")
+def add_source_tags(slug: str, req: TagSourceRequest):
+    t = _topic_or_404(slug)
+    source_row = db.get_source(t["id"], req.source_ref)
+    if not source_row:
+        raise HTTPException(status_code=404, detail="Source not found")
+    db.add_source_tags(source_row["id"], t["id"], req.tags)
+    return {"ok": True}
+
+
+@app.post("/topics/{slug}/tags/remove")
+def remove_source_tags(slug: str, req: TagSourceRequest):
+    t = _topic_or_404(slug)
+    source_row = db.get_source(t["id"], req.source_ref)
+    if not source_row:
+        raise HTTPException(status_code=404, detail="Source not found")
+    db.remove_source_tags(source_row["id"], t["id"], req.tags)
+    return {"ok": True}
+
+
+class RenameTagRequest(BaseModel):
+    old_name: str
+    new_name: str
+
+
+@app.post("/topics/{slug}/tags/rename")
+def rename_tag(slug: str, req: RenameTagRequest):
+    t = _topic_or_404(slug)
+    db.rename_tag(t["id"], req.old_name, req.new_name)
+    return {"ok": True}
+
+
+class MergeTagRequest(BaseModel):
+    source_tag: str
+    target_tag: str
+
+
+@app.post("/topics/{slug}/tags/merge")
+def merge_tags(slug: str, req: MergeTagRequest):
+    t = _topic_or_404(slug)
+    db.merge_tags(t["id"], req.source_tag, req.target_tag)
+    return {"ok": True}
+
+
+class DeleteTagRequest(BaseModel):
+    name: str
+
+
+@app.delete("/topics/{slug}/tags")
+def delete_tag(slug: str, req: DeleteTagRequest):
+    t = _topic_or_404(slug)
+    db.delete_tag(t["id"], req.name)
+    return {"deleted": True}
+
+
+# ── Notes ─────────────────────────────────────────────────────────────────────
+
+@app.get("/topics/{slug}/notes")
+def get_notes(slug: str):
+    t = _topic_or_404(slug)
+    return db.list_notes(t["id"])
+
+
+class CreateNoteRequest(BaseModel):
+    body: str
+    source_ref: str = ""
+
+
+@app.post("/topics/{slug}/notes", status_code=201)
+def create_note(slug: str, req: CreateNoteRequest):
+    t = _topic_or_404(slug)
+    source_id = None
+    if req.source_ref:
+        src = db.get_source(t["id"], req.source_ref)
+        if src:
+            source_id = src["id"]
+    note = db.create_note(t["id"], req.body, source_id)
+    client = store.get_client()
+    collection = store.get_or_create_collection(client, t["slug"])
+    chroma_id = store.embed_note(collection, note["id"], req.body, t["slug"])
+    db.set_note_chroma_id(note["id"], chroma_id)
+    return db.get_note(note["id"])
+
+
+class UpdateNoteRequest(BaseModel):
+    body: str
+
+
+@app.put("/topics/{slug}/notes/{note_id}")
+def update_note(slug: str, note_id: int, req: UpdateNoteRequest):
+    t = _topic_or_404(slug)
+    note = db.get_note(note_id)
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    client = store.get_client()
+    collection = store.get_or_create_collection(client, t["slug"])
+    if note.get("chroma_id"):
+        store.delete_note_embedding(collection, note["chroma_id"])
+    db.update_note(note_id, req.body)
+    chroma_id = store.embed_note(collection, note_id, req.body, t["slug"])
+    db.set_note_chroma_id(note_id, chroma_id)
+    return db.get_note(note_id)
+
+
+@app.delete("/topics/{slug}/notes/{note_id}")
+def delete_note(slug: str, note_id: int):
+    t = _topic_or_404(slug)
+    note = db.get_note(note_id)
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    client = store.get_client()
+    collection = store.get_or_create_collection(client, t["slug"])
+    if note.get("chroma_id"):
+        store.delete_note_embedding(collection, note["chroma_id"])
+    db.delete_note(note_id)
+    return {"deleted": True}
+
+
+# ── Search ────────────────────────────────────────────────────────────────────
+
 class SearchRequest(BaseModel):
     query: str
-    library: str
-    module: Optional[str] = ""
-    top_k: int = 5
+    topic: str
+    tags: list[str] = []
+    top_k: int = 8
 
 
 @app.post("/search")
 def search_endpoint(req: SearchRequest):
+    t = db.get_topic(req.topic)
+    if not t:
+        raise HTTPException(status_code=404, detail="Topic not found")
     client = store.get_client()
-    collection = store.get_or_create_collection(client, req.library)
-    raw = store.search(collection, req.query, top_k=req.top_k, module_filter=req.module or "")
+    collection = store.get_or_create_collection(client, t["slug"])
 
+    source_ids = None
+    if req.tags:
+        source_ids = [
+            s["id"] for s in db.list_sources(t["id"])
+            if any(tag in s.get("tags", []) for tag in req.tags)
+        ]
+
+    raw = store.search(collection, req.query, top_k=req.top_k, source_ids=source_ids)
     results = []
     for r in raw:
         meta = r["metadata"]
-        score = round(1 - (r["distance"] / 2), 4)
         results.append({
             "text": r["text"],
-            "score": score,
+            "score": round(1 - (r["distance"] / 2), 4),
+            "kind": meta.get("kind", "chunk"),
             "source_title": meta.get("source_title", ""),
             "source_type": meta.get("source_type", ""),
             "source_ref": meta.get("source_ref", ""),
             "chapter": meta.get("chapter", ""),
             "page": meta.get("page", 0),
             "timestamp_seconds": meta.get("timestamp_seconds", 0),
-            "module": meta.get("module", ""),
         })
-
     return {"results": results}
+
+
+class SearchAllRequest(BaseModel):
+    query: str
+    top_k_per_topic: int = 3
+
+
+@app.post("/search-all")
+def search_all_endpoint(req: SearchAllRequest):
+    top_k = min(req.top_k_per_topic, 5)
+    topics = db.list_topics()
+    client = store.get_client()
+    grouped = []
+    for t in topics:
+        try:
+            collection = store.get_or_create_collection(client, t["slug"])
+            results = store.search(collection, req.query, top_k=top_k)
+            if results:
+                grouped.append({
+                    "topic": t,
+                    "results": [{
+                        "text": r["text"],
+                        "score": round(1 - (r["distance"] / 2), 4),
+                        "kind": r["metadata"].get("kind", "chunk"),
+                        "source_title": r["metadata"].get("source_title", ""),
+                        "source_ref": r["metadata"].get("source_ref", ""),
+                    } for r in results],
+                })
+        except Exception:
+            continue
+    return {"groups": grouped}
