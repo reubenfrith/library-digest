@@ -1,4 +1,4 @@
-# Course Explorer
+# Library Digest
 
 Index PDFs, EPUBs, web pages, and YouTube videos, then query them through
 Claude or a local browser dashboard.
@@ -12,7 +12,7 @@ cd library-digest
 ```
 
 `setup.sh` will:
-1. Create a `.venv` and install all Python dependencies
+1. Install all Python dependencies via `uv sync`
 2. Pre-download the embedding model (~80 MB, cached after first run)
 3. Offer to register the MCP server in `~/.claude/settings.json`
 
@@ -32,7 +32,7 @@ add the following to `~/.claude/settings.json` and restart Claude Code:
 
 ```json
 "mcpServers": {
-  "course-explorer": {
+  "library-digest": {
     "command": "/absolute/path/to/library-digest/.venv/bin/python",
     "args": ["/absolute/path/to/library-digest/server.py"]
   }
@@ -52,11 +52,11 @@ After restarting Claude Code, five tools become available:
 
 | Tool | What it does |
 |------|-------------|
-| `ingest_source` | Index a file or URL into a course |
-| `search_course` | Semantic search across course materials |
-| `list_courses` | Show all indexed courses |
-| `list_sources` | Show all sources in a course |
-| `get_module_map` | Outline a course's chapter structure |
+| `ingest_source` | Index a file or URL into a library |
+| `search_library` | Semantic search across library materials |
+| `list_libraries` | Show all indexed libraries |
+| `list_sources` | Show all sources in a library |
+| `get_module_map` | Outline a library's chapter structure |
 
 ---
 
@@ -83,7 +83,7 @@ library-digest/
   server.py          # MCP server (Claude's interface, stdio)
   api.py             # FastAPI REST server (browser's interface)
   ui/index.html      # browser dashboard, no build step
-  requirements.txt
+  pyproject.toml
   setup.sh           # one-shot setup script
   start.sh           # start the dashboard
   configure_mcp.py   # safely writes ~/.claude/settings.json
@@ -95,9 +95,9 @@ library-digest/
 ## Example Claude conversation
 
 ```
-You: ingest https://example.com/gradient-descent into "ML Course" module week-4
+You: ingest https://example.com/gradient-descent into "ML Notes" module week-4
 Claude: [calls ingest_source] Ingested 'Gradient Descent Notes' — 89 chunks added.
 
 You: explain gradient descent using my week-4 materials
-Claude: [calls search_course] …synthesised answer with inline citations…
+Claude: [calls search_library] …synthesised answer with inline citations…
 ```

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Start the Course Explorer browser dashboard at http://localhost:8000
+# Start the Library Digest browser dashboard at http://localhost:8000
 
 set -euo pipefail
 
@@ -13,7 +13,7 @@ fi
 
 PORT="${PORT:-8000}"
 
-echo "Starting Course Explorer dashboard on http://localhost:${PORT}"
+echo "Starting Library Digest dashboard on http://localhost:${PORT}"
 echo "Press Ctrl+C to stop."
 echo ""
 

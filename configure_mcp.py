@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Inject or update the course-explorer MCP server entry in ~/.claude/settings.json.
+"""Inject or update the library-digest MCP server entry in ~/.claude/settings.json.
 
 Usage:  python configure_mcp.py <project_dir>
 """
@@ -31,7 +31,7 @@ def main():
     else:
         settings = {}
 
-    settings.setdefault("mcpServers", {})["course-explorer"] = {
+    settings.setdefault("mcpServers", {})["library-digest"] = {
         "command": python_path,
         "args": [server_path],
     }

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sets up the Course Explorer:
+# Sets up the Library Digest:
 #   1. Installs Python dependencies via uv sync
 #   2. Optionally registers the MCP server in ~/.claude/settings.json
 
@@ -16,7 +16,7 @@ warn() { echo "${yellow}!${reset} $*"; }
 die()  { echo "${red}✗${reset} $*" >&2; exit 1; }
 
 echo ""
-echo "${bold}Course Explorer — setup${reset}"
+echo "${bold}Library Digest — setup${reset}"
 echo "─────────────────────────────────────────"
 
 # ── uv check ─────────────────────────────────────────────────────────────
@@ -48,13 +48,13 @@ echo ""
 
 if [[ "$REPLY" =~ ^[Yy]$ ]]; then
   "$PYTHON" "$SCRIPT_DIR/configure_mcp.py" "$SCRIPT_DIR"
-  ok "MCP server 'course-explorer' registered."
+  ok "MCP server 'library-digest' registered."
   warn "Restart Claude Code to activate the new tools."
 else
   echo "Skipped. To register manually, add this to $SETTINGS:"
   echo ""
   echo '  "mcpServers": {'
-  echo '    "course-explorer": {'
+  echo '    "library-digest": {'
   echo "      \"command\": \"$PYTHON\","
   echo "      \"args\": [\"$SCRIPT_DIR/server.py\"]"
   echo '    }'

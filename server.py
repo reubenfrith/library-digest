@@ -8,49 +8,49 @@ from mcp.server.fastmcp import FastMCP
 import ingest
 import store
 
-mcp = FastMCP("course-explorer")
+mcp = FastMCP("library-digest")
 
 
 @mcp.tool()
 def ingest_source(
     path_or_url: str,
-    course: str,
+    library: str,
     module: str = "",
 ) -> str:
-    """Ingest a source (file path or URL) into a course collection.
+    """Ingest a source (file path or URL) into a library collection.
 
     Supported: PDF files, EPUB files, .txt/.md files, web pages, YouTube videos.
     Re-ingesting the same source_ref replaces the previous version cleanly.
     """
     client = store.get_client()
-    collection = store.get_or_create_collection(client, course)
+    collection = store.get_or_create_collection(client, library)
     store.delete_source(collection, path_or_url)
 
-    source_title, chunks = ingest.ingest_source(path_or_url, course, module)
+    source_title, chunks = ingest.ingest_source(path_or_url, library, module)
     store.add_chunks(collection, chunks)
 
-    return f"Ingested '{source_title}' — {len(chunks)} chunks added to course '{course}'."
+    return f"Ingested '{source_title}' — {len(chunks)} chunks added to library '{library}'."
 
 
 @mcp.tool()
-def search_course(
+def search_library(
     query: str,
-    course: str,
+    library: str,
     module: str = "",
     top_k: int = 5,
 ) -> str:
-    """Search course materials for passages relevant to a query.
+    """Search library materials for passages relevant to a query.
 
     Returns the top matching text chunks with source and location metadata.
     top_k is capped at 10.
     """
     top_k = min(top_k, 10)
     client = store.get_client()
-    collection = store.get_or_create_collection(client, course)
+    collection = store.get_or_create_collection(client, library)
     results = store.search(collection, query, top_k=top_k, module_filter=module)
 
     if not results:
-        return f"No results found in course '{course}'."
+        return f"No results found in library '{library}'."
 
     blocks = []
     for i, r in enumerate(results, start=1):
@@ -84,27 +84,27 @@ def search_course(
 
 
 @mcp.tool()
-def list_courses() -> str:
-    """List all courses in the knowledge base with their chunk counts."""
+def list_libraries() -> str:
+    """List all libraries in the knowledge base with their chunk counts."""
     client = store.get_client()
-    courses = store.list_collections(client)
+    libraries = store.list_collections(client)
 
-    if not courses:
-        return "No courses indexed yet. Use ingest_source to add materials."
+    if not libraries:
+        return "No libraries indexed yet. Use ingest_source to add materials."
 
-    lines = [f"• {c['display_name']} ({c['name']}) — {c['total_chunks']:,} chunks" for c in courses]
+    lines = [f"• {c['display_name']} ({c['name']}) — {c['total_chunks']:,} chunks" for c in libraries]
     return "\n".join(lines)
 
 
 @mcp.tool()
-def list_sources(course: str) -> str:
-    """List all sources indexed for a given course."""
+def list_sources(library: str) -> str:
+    """List all sources indexed for a given library."""
     client = store.get_client()
-    collection = store.get_or_create_collection(client, course)
+    collection = store.get_or_create_collection(client, library)
     sources = store.list_sources(collection)
 
     if not sources:
-        return f"No sources indexed for course '{course}'."
+        return f"No sources indexed for library '{library}'."
 
     lines = []
     for s in sources:
@@ -117,13 +117,13 @@ def list_sources(course: str) -> str:
 
 
 @mcp.tool()
-def get_module_map(course: str, module: str = "") -> str:
-    """Show the chapter/section structure of a course (or a single module).
+def get_module_map(library: str, module: str = "") -> str:
+    """Show the chapter/section structure of a library (or a single module).
 
     Returns an outline of chapters with word counts and text previews.
     """
     client = store.get_client()
-    collection = store.get_or_create_collection(client, course)
+    collection = store.get_or_create_collection(client, library)
     chunks = store.get_all_chunks_ordered(collection)
 
     if module:
@@ -131,9 +131,8 @@ def get_module_map(course: str, module: str = "") -> str:
 
     if not chunks:
         label = f"module '{module}' of " if module else ""
-        return f"No content found in {label}course '{course}'."
+        return f"No content found in {label}library '{library}'."
 
-    # Group by chapter
     chapters: dict[str, list[dict]] = {}
     for chunk in chunks:
         ch = chunk["metadata"].get("chapter") or "(untitled)"

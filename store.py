@@ -29,11 +29,11 @@ def get_client() -> chromadb.PersistentClient:
     return chromadb.PersistentClient(path=CHROMA_DIR)
 
 
-def get_or_create_collection(client: chromadb.PersistentClient, course: str):
-    name = _slugify(course)
+def get_or_create_collection(client: chromadb.PersistentClient, library: str):
+    name = _slugify(library)
     return client.get_or_create_collection(
         name=name,
-        metadata={"course_name": course, "hnsw:space": "cosine"},
+        metadata={"library_name": library, "hnsw:space": "cosine"},
         embedding_function=_embedding_fn(),
     )
 
@@ -43,7 +43,7 @@ def list_collections(client: chromadb.PersistentClient) -> list[dict]:
     result = []
     for col in cols:
         full = client.get_collection(col.name, embedding_function=_embedding_fn())
-        display = (full.metadata or {}).get("course_name", col.name)
+        display = (full.metadata or {}).get("library_name", col.name)
         result.append({
             "name": col.name,
             "display_name": display,

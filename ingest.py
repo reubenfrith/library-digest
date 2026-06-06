@@ -256,7 +256,7 @@ def extract_text(path: str) -> list[dict]:
     return sections
 
 
-def ingest_source(path_or_url: str, course: str, module: str = "") -> tuple[str, list[dict]]:
+def ingest_source(path_or_url: str, library: str, module: str = "") -> tuple[str, list[dict]]:
     lower = path_or_url.lower()
 
     if lower.startswith("http://") or lower.startswith("https://"):
@@ -281,7 +281,7 @@ def ingest_source(path_or_url: str, course: str, module: str = "") -> tuple[str,
     else:
         raise ValueError(f"Unsupported source: {path_or_url}")
 
-    course_slug = _slugify(course)
+    library_slug = _slugify(library)
     chunks = []
     chapter_index = -1
     last_chapter = None
@@ -297,7 +297,7 @@ def ingest_source(path_or_url: str, course: str, module: str = "") -> tuple[str,
                 "id": str(uuid.uuid4()),
                 "text": text,
                 "metadata": {
-                    "course": course_slug,
+                    "library": library_slug,
                     "module": module,
                     "source_type": source_type,
                     "source_ref": path_or_url,

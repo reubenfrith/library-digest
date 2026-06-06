@@ -10,7 +10,7 @@ from pydantic import BaseModel
 import ingest
 import store
 
-app = FastAPI(title="Course Explorer API")
+app = FastAPI(title="Library Digest API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -29,23 +29,23 @@ def serve_ui():
     return HTMLResponse(content=UI_PATH.read_text(encoding="utf-8"))
 
 
-@app.get("/courses")
-def get_courses():
+@app.get("/libraries")
+def get_libraries():
     client = store.get_client()
     return store.list_collections(client)
 
 
-@app.get("/courses/{course}/sources")
-def get_sources(course: str):
+@app.get("/libraries/{library}/sources")
+def get_sources(library: str):
     client = store.get_client()
-    collection = store.get_or_create_collection(client, course)
+    collection = store.get_or_create_collection(client, library)
     return store.list_sources(collection)
 
 
-@app.get("/courses/{course}/modules")
-def get_modules(course: str):
+@app.get("/libraries/{library}/modules")
+def get_modules(library: str):
     client = store.get_client()
-    collection = store.get_or_create_collection(client, course)
+    collection = store.get_or_create_collection(client, library)
     result = collection.get(include=["metadatas"])
     modules = sorted({
         m.get("module", "")
@@ -57,19 +57,19 @@ def get_modules(course: str):
 
 class IngestRequest(BaseModel):
     path_or_url: str
-    course: str
+    library: str
     module: str = ""
 
 
 @app.post("/ingest")
 def ingest_source_endpoint(req: IngestRequest):
     try:
-        source_title, chunks = ingest.ingest_source(req.path_or_url, req.course, req.module)
+        source_title, chunks = ingest.ingest_source(req.path_or_url, req.library, req.module)
     except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
 
     client = store.get_client()
-    collection = store.get_or_create_collection(client, req.course)
+    collection = store.get_or_create_collection(client, req.library)
     store.delete_source(collection, req.path_or_url)
     store.add_chunks(collection, chunks)
 
@@ -80,17 +80,17 @@ class DeleteSourceRequest(BaseModel):
     source_ref: str
 
 
-@app.delete("/courses/{course}/sources")
-def delete_source_endpoint(course: str, req: DeleteSourceRequest):
+@app.delete("/libraries/{library}/sources")
+def delete_source_endpoint(library: str, req: DeleteSourceRequest):
     client = store.get_client()
-    collection = store.get_or_create_collection(client, course)
+    collection = store.get_or_create_collection(client, library)
     store.delete_source(collection, req.source_ref)
     return {"deleted": True}
 
 
 class SearchRequest(BaseModel):
     query: str
-    course: str
+    library: str
     module: Optional[str] = ""
     top_k: int = 5
 
@@ -98,7 +98,7 @@ class SearchRequest(BaseModel):
 @app.post("/search")
 def search_endpoint(req: SearchRequest):
     client = store.get_client()
-    collection = store.get_or_create_collection(client, req.course)
+    collection = store.get_or_create_collection(client, req.library)
     raw = store.search(collection, req.query, top_k=req.top_k, module_filter=req.module or "")
 
     results = []

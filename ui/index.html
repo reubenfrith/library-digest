@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Course Explorer</title>
+<title>Library Digest</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -185,14 +185,14 @@
     margin-top: 6px;
   }
 
-  /* ── New course inline form ─────────────────────────── */
-  .new-course-form {
+  /* ── New library inline form ────────────────────────── */
+  .new-library-form {
     display: none;
     gap: 6px;
     align-items: center;
   }
-  .new-course-form.open { display: flex; }
-  .new-course-form input { min-width: 160px; }
+  .new-library-form.open { display: flex; }
+  .new-library-form input { min-width: 160px; }
 
   /* ── Empty / loading states ─────────────────────────── */
   .empty { color: var(--text-dim); font-size: 13px; padding: 20px 0; text-align: center; }
@@ -204,20 +204,20 @@
 
 <!-- Header -->
 <header>
-  <h1>Course Explorer</h1>
+  <h1>Library Digest</h1>
   <div class="controls">
-    <div class="new-course-form" id="newCourseForm">
-      <input type="text" id="newCourseName" placeholder="Course name…" />
-      <button class="btn-primary" onclick="submitNewCourse()">Create</button>
-      <button class="btn-ghost" onclick="toggleNewCourse(false)">Cancel</button>
+    <div class="new-library-form" id="newLibraryForm">
+      <input type="text" id="newLibraryName" placeholder="Library name…" />
+      <button class="btn-primary" onclick="submitNewLibrary()">Create</button>
+      <button class="btn-ghost" onclick="toggleNewLibrary(false)">Cancel</button>
     </div>
-    <button class="btn-primary" id="newCourseBtn" onclick="toggleNewCourse(true)">+ New Course</button>
+    <button class="btn-primary" id="newLibraryBtn" onclick="toggleNewLibrary(true)">+ New Library</button>
   </div>
 </header>
 
 <!-- Toolbar -->
 <div class="toolbar">
-  <select id="courseSelect" onchange="onCourseChange()">
+  <select id="librarySelect" onchange="onLibraryChange()">
     <option value="">Loading…</option>
   </select>
   <select id="moduleSelect" onchange="onModuleChange()">
@@ -231,7 +231,7 @@
   <!-- Left: Sources -->
   <div class="pane" id="sourcesPane">
     <div class="pane-title">Sources</div>
-    <div id="sourceList"><div class="empty">Select a course above.</div></div>
+    <div id="sourceList"><div class="empty">Select a library above.</div></div>
 
     <div class="add-form">
       <input type="text" id="addUrl" placeholder="URL or absolute file path…" />
@@ -248,7 +248,7 @@
     <div class="pane-title">Search</div>
     <div class="search-input-wrap">
       <span class="search-icon">🔍</span>
-      <input type="text" id="searchInput" placeholder="Search your course materials…" oninput="onSearchInput()" />
+      <input type="text" id="searchInput" placeholder="Search your library…" oninput="onSearchInput()" />
     </div>
     <div id="searchResults"><div class="empty">Type to search.</div></div>
   </div>
@@ -262,36 +262,36 @@ const API = (typeof window !== 'undefined' && window.location.protocol !== 'file
 
 // ── State ──────────────────────────────────────────────────────────────
 let allSources = [];
-let allCourses = [];
+let allLibraries = [];
 let searchTimer = null;
 let currentModule = '';
 
 // ── Init ───────────────────────────────────────────────────────────────
 async function init() {
   try {
-    const courses = await apiFetch('/courses');
-    allCourses = courses;
-    const sel = document.getElementById('courseSelect');
-    sel.innerHTML = courses.length
-      ? courses.map(c => `<option value="${c.name}">${c.display_name} (${c.total_chunks.toLocaleString()} chunks)</option>`).join('')
-      : '<option value="">No courses yet</option>';
-    if (courses.length) onCourseChange();
+    const libraries = await apiFetch('/libraries');
+    allLibraries = libraries;
+    const sel = document.getElementById('librarySelect');
+    sel.innerHTML = libraries.length
+      ? libraries.map(c => `<option value="${c.name}">${c.display_name} (${c.total_chunks.toLocaleString()} chunks)</option>`).join('')
+      : '<option value="">No libraries yet</option>';
+    if (libraries.length) onLibraryChange();
   } catch (e) {
     document.getElementById('sourceList').innerHTML = `<div class="empty">Could not reach API: ${e.message}</div>`;
   }
 }
 
-// ── Course / module change ─────────────────────────────────────────────
-async function onCourseChange() {
-  const course = currentCourse();
-  if (!course) return;
+// ── Library / module change ────────────────────────────────────────────
+async function onLibraryChange() {
+  const library = currentLibrary();
+  if (!library) return;
   currentModule = '';
   document.getElementById('searchInput').value = '';
   document.getElementById('searchResults').innerHTML = '<div class="empty">Type to search.</div>';
 
   const [sources, modules] = await Promise.all([
-    apiFetch(`/courses/${course}/sources`),
-    apiFetch(`/courses/${course}/modules`),
+    apiFetch(`/libraries/${library}/sources`),
+    apiFetch(`/libraries/${library}/modules`),
   ]);
   allSources = sources;
   renderSources();
@@ -339,8 +339,8 @@ function renderSources() {
 
 async function deleteSource(sourceRef) {
   if (!confirm(`Delete "${sourceRef}"?\nThis removes all its chunks from the index.`)) return;
-  const course = currentCourse();
-  await apiFetch(`/courses/${course}/sources`, {
+  const library = currentLibrary();
+  await apiFetch(`/libraries/${library}/sources`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ source_ref: sourceRef }),
@@ -353,11 +353,11 @@ async function deleteSource(sourceRef) {
 async function submitAdd() {
   const url = document.getElementById('addUrl').value.trim();
   const module = document.getElementById('addModule').value.trim();
-  const course = currentCourse();
+  const library = currentLibrary();
   const status = document.getElementById('addStatus');
   const btn = document.getElementById('addBtn');
 
-  if (!url || !course) { setStatus('Enter a URL or file path.', 'error'); return; }
+  if (!url || !library) { setStatus('Enter a URL or file path.', 'error'); return; }
 
   btn.disabled = true;
   btn.textContent = '⏳ Indexing…';
@@ -367,11 +367,11 @@ async function submitAdd() {
     const res = await apiFetch('/ingest', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path_or_url: url, course, module }),
+      body: JSON.stringify({ path_or_url: url, library, module }),
     });
     setStatus(`✓ "${res.source_title}" — ${res.chunks_added} chunks added.`, 'ok');
     document.getElementById('addUrl').value = '';
-    const sources = await apiFetch(`/courses/${course}/sources`);
+    const sources = await apiFetch(`/libraries/${library}/sources`);
     allSources = sources;
     renderSources();
   } catch (e) {
@@ -397,12 +397,12 @@ function onSearchInput() {
 }
 
 async function runSearch(query) {
-  const course = currentCourse();
-  if (!course) return;
+  const library = currentLibrary();
+  if (!library) return;
 
   document.getElementById('searchResults').innerHTML = '<div class="empty"><span class="spinner">⏳</span> Searching…</div>';
 
-  const body = { query, course, top_k: 8 };
+  const body = { query, library, top_k: 8 };
   if (currentModule) body.module = currentModule;
 
   const data = await apiFetch('/search', {
@@ -448,19 +448,19 @@ function locationLabel(r) {
   return '';
 }
 
-// ── New course ─────────────────────────────────────────────────────────
-function toggleNewCourse(open) {
-  document.getElementById('newCourseForm').classList.toggle('open', open);
-  document.getElementById('newCourseBtn').style.display = open ? 'none' : '';
-  if (open) document.getElementById('newCourseName').focus();
+// ── New library ────────────────────────────────────────────────────────
+function toggleNewLibrary(open) {
+  document.getElementById('newLibraryForm').classList.toggle('open', open);
+  document.getElementById('newLibraryBtn').style.display = open ? 'none' : '';
+  if (open) document.getElementById('newLibraryName').focus();
 }
 
-function submitNewCourse() {
-  const name = document.getElementById('newCourseName').value.trim();
+function submitNewLibrary() {
+  const name = document.getElementById('newLibraryName').value.trim();
   if (!name) return;
 
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
-  const sel = document.getElementById('courseSelect');
+  const sel = document.getElementById('librarySelect');
 
   if (!Array.from(sel.options).some(o => o.value === slug)) {
     const opt = document.createElement('option');
@@ -469,13 +469,13 @@ function submitNewCourse() {
     sel.appendChild(opt);
   }
   sel.value = slug;
-  document.getElementById('newCourseName').value = '';
-  toggleNewCourse(false);
-  onCourseChange();
+  document.getElementById('newLibraryName').value = '';
+  toggleNewLibrary(false);
+  onLibraryChange();
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
-function currentCourse() { return document.getElementById('courseSelect').value; }
+function currentLibrary() { return document.getElementById('librarySelect').value; }
 
 function esc(str) {
   return String(str)
