@@ -1,0 +1,8 @@
+.venv/
+.chroma/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+library/*
+!library/.gitkeep
