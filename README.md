@@ -74,46 +74,34 @@ PORT=9000 ./start.sh  # custom port
 
 ## AI client integration (MCP)
 
-`setup.sh` will offer to register the MCP server for both clients. To re-run either step standalone:
+`setup.sh` will present an interactive menu to register the MCP server across any combination of supported clients. To re-run it standalone:
 
 ```bash
-.venv/bin/python configure_mcp.py /absolute/path/to/library-digest
-.venv/bin/python configure_copilot.py /absolute/path/to/library-digest
+.venv/bin/python configure_clients.py /absolute/path/to/library-digest
 ```
 
-### Claude Code
+Supported clients and where their config is written:
 
-Writes to `~/.claude/settings.json`. Restart Claude Code after registering.
+| Client | Config file |
+|--------|-------------|
+| Claude Code | `~/.claude/settings.json` |
+| GitHub Copilot CLI | `~/.copilot/mcp-config.json` |
+| opencode | `~/.config/opencode/opencode.json` |
+| Cursor | `~/.cursor/mcp.json` |
+| Zed | `~/.config/zed/settings.json` |
+| Goose | `~/.config/goose/config.yaml` |
+| Amp | `~/.config/amp/settings.json` |
+| Continue | `.continue/mcpServers/library-digest.json` (project-local, commit to share) |
 
-Manual entry:
-```json
-"mcpServers": {
-  "library-digest": {
-    "command": "/absolute/path/to/library-digest/.venv/bin/python",
-    "args": ["/absolute/path/to/library-digest/server.py"]
-  }
-}
-```
+> All clients require the absolute `.venv/bin/python` path — they start MCP servers in a clean shell where `python` may not resolve to the right environment.
 
-### GitHub Copilot CLI
+### Client-specific notes
 
-Writes to `~/.copilot/mcp-config.json`. Start a new Copilot CLI session after registering.
-
-Manual entry:
-```json
-{
-  "mcpServers": {
-    "library-digest": {
-      "type": "local",
-      "command": "/absolute/path/to/library-digest/.venv/bin/python",
-      "args": ["/absolute/path/to/library-digest/server.py"],
-      "tools": ["*"]
-    }
-  }
-}
-```
-
-> Both clients require the absolute `.venv/bin/python` path — they start MCP servers in a clean shell where `python` may not resolve to the right environment.
+- **opencode** — uses `"type": "local"` and a combined `command` array; do not copy configs from other tools directly
+- **Zed** — uses `context_servers` (not `mcpServers`); the `"source": "custom"` field is required or Zed silently ignores the entry
+- **Goose** — YAML-based config; requires PyYAML (usually available transitively); uses `cmd` not `command`
+- **Continue** — MCP only works in **agent mode**, not plain chat mode
+- **Cursor / Amp** — both support a workspace-scoped config file (`.cursor/mcp.json` / `.amp/settings.json`) if you prefer project-local over global
 
 ---
 
