@@ -6,6 +6,8 @@ Usage:  python configure_clients.py <project_dir>
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
 
 
@@ -35,14 +37,26 @@ def _write_json(path, data):
 # ── per-client registration ───────────────────────────────────────────────────
 
 def register_claude(project_dir, python, server):
-    path = os.path.expanduser("~/.claude/settings.json")
-    cfg = _read_json(path)
-    cfg.setdefault("mcpServers", {})["library-digest"] = {
-        "command": python,
-        "args": [server],
-    }
-    _write_json(path, cfg)
-    return path
+    # Claude Code's MCP config lives in ~/.claude.json (NOT ~/.claude/mcp.json
+    # or ~/.claude/settings.json — those are silently ignored). Shell out to the
+    # official CLI so we never hand-edit the file that holds the OAuth session.
+    # User scope makes the server available from every project.
+    if shutil.which("claude") is None:
+        raise RuntimeError("`claude` CLI not on PATH — install Claude Code first")
+
+    subprocess.run(
+        ["claude", "mcp", "remove", "-s", "user", "library-digest"],
+        capture_output=True, check=False,
+    )
+    result = subprocess.run(
+        ["claude", "mcp", "add", "-s", "user", "library-digest",
+         "--", python, server],
+        capture_output=True, text=True, check=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr.strip() or result.stdout.strip()
+                           or "`claude mcp add` failed")
+    return os.path.expanduser("~/.claude.json (user scope)")
 
 
 def register_copilot(project_dir, python, server):
@@ -166,7 +180,7 @@ def register_continue(project_dir, python, server):
 # ── client registry ───────────────────────────────────────────────────────────
 
 CLIENTS = [
-    ("Claude Code",          "~/.claude/settings.json",                         register_claude,   "Restart Claude Code to activate."),
+    ("Claude Code",          "~/.claude.json (via claude mcp add -s user)",     register_claude,   "Restart Claude Code to activate."),
     ("GitHub Copilot CLI",   "~/.copilot/mcp-config.json",                      register_copilot,  "Start a new Copilot CLI session."),
     ("opencode",             "~/.config/opencode/opencode.json",                 register_opencode, "Restart opencode to activate."),
     ("Cursor",               "~/.cursor/mcp.json",                               register_cursor,   "Restart Cursor to activate."),

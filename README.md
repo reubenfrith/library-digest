@@ -40,6 +40,10 @@ ingest.py  (PDF / EPUB / web / YouTube extractors + chunker)
 
 ## Quick start
 
+**Prerequisites:**
+- [`uv`](https://docs.astral.sh/uv/) — Python package manager (`curl -LsSf https://astral.sh/uv/install.sh | sh`)
+- The CLI of whichever AI client you want to register with must be on `PATH`. Currently only **Claude Code** uses its CLI (`claude mcp add`); the other clients (Cursor, Zed, opencode, Copilot CLI, Amp, Goose, Continue) are registered by writing their config files directly, so no CLI is required for them.
+
 ```bash
 git clone <this-repo>
 cd library-digest
@@ -49,7 +53,7 @@ cd library-digest
 `setup.sh` will:
 1. Install all Python dependencies via `uv sync`
 2. Pre-download the embedding model (~80 MB, cached after first run)
-3. Offer to register the MCP server in `~/.claude/settings.json`
+3. Offer to register the MCP server with one or more AI clients (Claude Code, Cursor, Zed, …)
 
 Then start the browser dashboard:
 
@@ -84,7 +88,7 @@ Supported clients and where their config is written:
 
 | Client | Config file |
 |--------|-------------|
-| Claude Code | `~/.claude/settings.json` |
+| Claude Code | `~/.claude.json` (user scope, via `claude mcp add -s user` — requires the `claude` CLI on PATH) |
 | GitHub Copilot CLI | `~/.copilot/mcp-config.json` |
 | opencode | `~/.config/opencode/opencode.json` |
 | Cursor | `~/.cursor/mcp.json` |
@@ -200,7 +204,7 @@ library-digest/
   pyproject.toml
   setup.sh           # one-shot setup: deps, embedding model, MCP config
   start.sh           # start the dashboard at http://localhost:8000
-  configure_mcp.py   # safely writes the MCP entry to ~/.claude/settings.json
+  configure_mcp.py   # registers the MCP server with Claude Code (user scope)
   digest.db          # SQLite database (auto-created, gitignored)
   .chroma/           # vector database (auto-created, gitignored)
 ```

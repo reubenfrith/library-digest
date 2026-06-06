@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Sets up the Library Digest:
 #   1. Installs Python dependencies via uv sync
-#   2. Optionally registers the MCP server in ~/.claude/settings.json
+#   2. Optionally registers the MCP server with one or more AI clients
 
 set -euo pipefail
 

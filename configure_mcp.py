@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
-"""Inject or update the library-digest MCP server entry in ~/.claude/settings.json.
+"""Register library-digest as a user-scope MCP server with Claude Code.
 
 Usage:  python configure_mcp.py <project_dir>
+
+Uses the official `claude mcp add -s user` CLI so we never have to hand-edit
+~/.claude.json (which holds the user's OAuth session and lots of other state).
+User scope makes the server available from every project, not just this one.
 """
-import json
 import os
+import shutil
+import subprocess
 import sys
 
 
@@ -19,28 +24,27 @@ def main():
     if not os.path.exists(python_path):
         sys.exit(f"Virtual environment not found at {python_path}\nRun setup.sh first.")
 
-    settings_path = os.path.expanduser("~/.claude/settings.json")
+    if shutil.which("claude") is None:
+        sys.exit("`claude` CLI not found on PATH. Install Claude Code first: "
+                 "https://docs.claude.com/en/docs/claude-code/quickstart")
 
-    # Read existing settings or start fresh
-    if os.path.exists(settings_path):
-        with open(settings_path, "r", encoding="utf-8") as f:
-            try:
-                settings = json.load(f)
-            except json.JSONDecodeError as e:
-                sys.exit(f"Could not parse {settings_path}: {e}")
-    else:
-        settings = {}
+    # Remove any prior entry so the add is idempotent; ignore failure (no entry yet).
+    subprocess.run(
+        ["claude", "mcp", "remove", "-s", "user", "library-digest"],
+        capture_output=True, check=False,
+    )
 
-    settings.setdefault("mcpServers", {})["library-digest"] = {
-        "command": python_path,
-        "args": [server_path],
-    }
+    result = subprocess.run(
+        ["claude", "mcp", "add", "-s", "user", "library-digest",
+         "--", python_path, server_path],
+        capture_output=True, text=True, check=False,
+    )
+    if result.returncode != 0:
+        sys.exit(result.stderr.strip() or result.stdout.strip()
+                 or "`claude mcp add` failed")
 
-    with open(settings_path, "w", encoding="utf-8") as f:
-        json.dump(settings, f, indent=2)
-        f.write("\n")
-
-    print(f"Written to {settings_path}")
+    print(f"Registered library-digest at user scope (~/.claude.json).")
+    print("Run `claude mcp list` to verify, then restart any open Claude Code sessions.")
 
 
 if __name__ == "__main__":
