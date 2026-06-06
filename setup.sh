@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Sets up the Course Explorer:
-#   1. Creates .venv and installs Python dependencies
+#   1. Installs Python dependencies via uv sync
 #   2. Optionally registers the MCP server in ~/.claude/settings.json
 
 set -euo pipefail
@@ -19,24 +19,13 @@ echo ""
 echo "${bold}Course Explorer — setup${reset}"
 echo "─────────────────────────────────────────"
 
-# ── Python version check ──────────────────────────────────────────────────
-PY=$(command -v python3 || command -v python || die "Python 3.9+ required but not found.")
-PY_VER=$("$PY" -c "import sys; print(sys.version_info[:2])")
-[[ "$PY_VER" < "(3, 9)" ]] && die "Python 3.9+ required (found $PY_VER)."
-
-# ── Virtual environment ───────────────────────────────────────────────────
-if [[ -d "$VENV" ]]; then
-  ok "Virtual environment already exists — skipping creation."
-else
-  echo "Creating virtual environment…"
-  "$PY" -m venv "$VENV"
-  ok "Virtual environment created at .venv/"
-fi
+# ── uv check ─────────────────────────────────────────────────────────────
+command -v uv &>/dev/null || die "uv not found. Install it: curl -LsSf https://astral.sh/uv/install.sh | sh"
 
 # ── Dependencies ──────────────────────────────────────────────────────────
 echo "Installing dependencies (this may take a minute on first run)…"
-"$PYTHON" -m pip install --quiet --upgrade pip
-"$PYTHON" -m pip install --quiet -r "$SCRIPT_DIR/requirements.txt"
+cd "$SCRIPT_DIR"
+uv sync --quiet
 ok "Dependencies installed."
 
 # ── Embedding model pre-warm ──────────────────────────────────────────────
