@@ -87,6 +87,10 @@ def init_db(db_path: str = DB_PATH) -> None:
 
 def create_topic(name: str, description: str = "", db_path: str = DB_PATH) -> dict:
     slug = _slugify(name)
+    if not slug:
+        raise ValueError(
+            f"Topic name '{name}' has no alphanumeric characters — pick a real name"
+        )
     conn = get_connection(db_path)
     with conn:
         conn.execute(

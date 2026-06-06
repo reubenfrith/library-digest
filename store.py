@@ -1,5 +1,7 @@
 import os
 import re
+import sys
+import traceback
 
 import chromadb
 from chromadb.utils import embedding_functions
@@ -40,8 +42,15 @@ def get_or_create_collection(client: chromadb.PersistentClient, topic_slug: str)
 def delete_collection(client: chromadb.PersistentClient, topic_slug: str) -> None:
     try:
         client.delete_collection(topic_slug)
-    except Exception:
+    except chromadb.errors.NotFoundError:
+        # Topic existed in SQLite but never had a collection created (no sources
+        # were ever ingested). Nothing to delete.
         pass
+    except Exception:
+        # Don't propagate — caller has already removed the SQLite row — but
+        # surface the failure so orphan vectors aren't invisible.
+        print(f"[store] delete_collection({topic_slug!r}) failed:", file=sys.stderr)
+        traceback.print_exc()
 
 
 def add_chunks(collection, chunks: list[dict], batch_size: int = 100) -> None:
@@ -136,4 +145,5 @@ def delete_note_embedding(collection, chroma_id: str) -> None:
     try:
         collection.delete(ids=[chroma_id])
     except Exception:
-        pass
+        print(f"[store] delete_note_embedding({chroma_id!r}) failed:", file=sys.stderr)
+        traceback.print_exc()

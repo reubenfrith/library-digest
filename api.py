@@ -1,6 +1,7 @@
+import os
+import re
 import subprocess
 from pathlib import Path
-from typing import Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,7 +13,18 @@ import store
 import ingest as ingest_mod
 
 app = FastAPI(title="Library Digest API")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+# Restrict CORS to localhost on the port we actually run on. The dashboard is
+# same-origin so it never relies on CORS; this just blocks third-party pages
+# from driving the destructive endpoints below via the user's browser.
+_PORT = os.environ.get("PORT", "8000")
+_ALLOWED_ORIGINS = [f"http://localhost:{_PORT}", f"http://127.0.0.1:{_PORT}"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_ALLOWED_ORIGINS,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 UI_PATH = Path(__file__).parent / "ui" / "index.html"
 
@@ -58,9 +70,12 @@ def create_topic(req: CreateTopicRequest):
 @app.delete("/topics/{slug}")
 def delete_topic(slug: str):
     t = _topic_or_404(slug)
+    # SQLite first: if the Chroma delete fails afterwards the worst case is
+    # orphan vectors on disk, which are invisible to the user. Reverse order
+    # would leave a visible topic with no data.
+    db.delete_topic(t["slug"])
     client = store.get_client()
     store.delete_collection(client, t["slug"])
-    db.delete_topic(t["slug"])
     return {"deleted": True}
 
 
@@ -102,10 +117,15 @@ def ingest_source_endpoint(slug: str, req: IngestRequest):
         db.update_source_error(source_row["id"], str(e))
         raise HTTPException(status_code=422, detail=str(e))
 
+    if not chunks:
+        msg = "Source produced no extractable text"
+        db.update_source_error(source_row["id"], msg)
+        raise HTTPException(status_code=422, detail=msg)
+
     store.delete_chunks_for_source(collection, source_row["id"])
     store.add_chunks(collection, chunks)
 
-    source_type = chunks[0]["metadata"]["source_type"] if chunks else ""
+    source_type = chunks[0]["metadata"]["source_type"]
     db.update_source_done(source_row["id"], source_title, source_type, len(chunks))
 
     if req.tags:
@@ -154,8 +174,24 @@ class OpenRequest(BaseModel):
     path: str
 
 
+def _is_registered_source_ref(path: str) -> bool:
+    conn = db.get_connection()
+    row = conn.execute(
+        "SELECT 1 FROM sources WHERE source_ref = ? LIMIT 1", (path,)
+    ).fetchone()
+    conn.close()
+    return row is not None
+
+
 @app.post("/open")
 def open_local_file(req: OpenRequest):
+    # Restrict to local filesystem paths that are currently registered as a
+    # source. Without this guard, any third-party page in the user's browser
+    # can POST here and have macOS `open` launch arbitrary apps / scripts.
+    if re.match(r"^[a-z]+://", req.path, re.I):
+        raise HTTPException(status_code=400, detail="Only local file paths are allowed")
+    if not _is_registered_source_ref(req.path):
+        raise HTTPException(status_code=403, detail="Path is not a registered source")
     p = Path(req.path)
     if not p.exists():
         raise HTTPException(status_code=404, detail="File not found")

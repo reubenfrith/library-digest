@@ -72,9 +72,9 @@ def create_topic(name: str, description: str = "") -> str:
 def delete_topic(topic: str) -> str:
     """Delete a topic and all its sources, notes, and embeddings. Irreversible."""
     t = _topic_or_err(topic)
+    db.delete_topic(t["slug"])
     client = store.get_client()
     store.delete_collection(client, t["slug"])
-    db.delete_topic(t["slug"])
     return f"Deleted topic '{t['name']}' and all its data."
 
 
@@ -147,10 +147,15 @@ def ingest_source(path_or_url: str, topic: str, tags: list[str] = []) -> str:
         db.update_source_error(source_row["id"], str(e))
         return f"Error ingesting '{path_or_url}': {e}"
 
+    if not chunks:
+        msg = "Source produced no extractable text"
+        db.update_source_error(source_row["id"], msg)
+        return f"Error ingesting '{path_or_url}': {msg}"
+
     store.delete_chunks_for_source(collection, source_row["id"])
     store.add_chunks(collection, chunks)
 
-    source_type = chunks[0]["metadata"]["source_type"] if chunks else ""
+    source_type = chunks[0]["metadata"]["source_type"]
     db.update_source_done(source_row["id"], source_title, source_type, len(chunks))
 
     if tags:
