@@ -28,6 +28,11 @@ cd "$SCRIPT_DIR"
 uv sync --quiet
 ok "Dependencies installed."
 
+# ── Database init ─────────────────────────────────────────────────────────
+echo "Initialising database…"
+"$PYTHON" -c "import sys; sys.path.insert(0, '${SCRIPT_DIR}'); import db; db.init_db()"
+ok "Database ready."
+
 # ── Embedding model pre-warm ──────────────────────────────────────────────
 echo "Pre-loading embedding model (downloads ~80 MB on first run)…"
 "$PYTHON" - <<'PYEOF'
