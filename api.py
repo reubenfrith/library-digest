@@ -1,3 +1,4 @@
+import subprocess
 from pathlib import Path
 from typing import Optional
 
@@ -123,7 +124,7 @@ def get_source_outline(slug: str, source_id: int):
     seen: dict[str, dict] = {}
     order: list[str] = []
     for chunk in chunks:
-        ch = chunk["metadata"].get("chapter", "") or "Main"
+        ch = chunk["metadata"].get("chapter", "") or "—"
         if ch not in seen:
             seen[ch] = {"name": ch, "word_count": 0}
             order.append(ch)
@@ -147,6 +148,19 @@ def delete_source_endpoint(slug: str, req: DeleteSourceRequest):
     store.delete_chunks_for_source(collection, source_row["id"])
     db.delete_source_record(source_row["id"])
     return {"deleted": True}
+
+
+class OpenRequest(BaseModel):
+    path: str
+
+
+@app.post("/open")
+def open_local_file(req: OpenRequest):
+    p = Path(req.path)
+    if not p.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    subprocess.Popen(["open", str(p)])
+    return {"ok": True}
 
 
 # ── Tags ──────────────────────────────────────────────────────────────────────

@@ -44,17 +44,24 @@ def extract_pdf(path: str) -> list[dict]:
     sections = []
     last_chapter = ""
     heading_patterns = [
-        re.compile(r"^[A-Z][A-Z\s]{5,}$"),
+        # All-caps heading: letters/spaces only, 3–50 chars (filters out long paragraphs and single chars)
+        re.compile(r"^[A-Z][A-Z\s]{2,48}[A-Z]$"),
         re.compile(r"^Chapter\s+\d+", re.I),
-        re.compile(r"^\d+\.\s+[A-Z]"),
+        re.compile(r"^Section\s+\d+", re.I),
+        # Numbered: "1.", "1.1", "1.1.1" followed by a capital word
+        re.compile(r"^\d+(\.\d+)*\.?\s+[A-Z][a-z]"),
     ]
+    # Lines that look like headings but aren't (page numbers, dates, short noise)
+    _noise = re.compile(r"^\d+$|^\d{1,2}[/-]\d{1,2}[/-]\d{2,4}$")
 
     for i, page in enumerate(reader.pages, start=1):
         text = page.extract_text() or ""
         chapter = ""
-        for line in text.split("\n"):
+        for line in text.split("\n")[:10]:  # headings appear near the top of a page
             line = line.strip()
-            if line and any(p.match(line) for p in heading_patterns):
+            if not line or _noise.match(line):
+                continue
+            if any(p.match(line) for p in heading_patterns):
                 chapter = line
                 break
         if chapter:
@@ -209,22 +216,24 @@ def extract_video(url: str) -> tuple[str, list[dict]]:
         section_duration += snippet.duration
 
         if section_duration >= 180:
+            t = int(section_start)
             sections.append({
                 "text": " ".join(current_texts),
-                "chapter": "",
+                "chapter": f"{t // 60}:{t % 60:02d}",
                 "page": 0,
-                "timestamp_seconds": int(section_start),
+                "timestamp_seconds": t,
             })
             current_texts = []
             section_start = snippet.start + snippet.duration
             section_duration = 0.0
 
     if current_texts:
+        t = int(section_start)
         sections.append({
             "text": " ".join(current_texts),
-            "chapter": "",
+            "chapter": f"{t // 60}:{t % 60:02d}",
             "page": 0,
-            "timestamp_seconds": int(section_start),
+            "timestamp_seconds": t,
         })
 
     return source_title, sections

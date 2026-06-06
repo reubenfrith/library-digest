@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Library Digest</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -332,22 +333,35 @@ body {
 
 /* ── Two-column topic body ──────────────────────────────────── */
 .topic-columns {
-  display: grid;
-  grid-template-columns: 1fr 300px;
+  display: flex;
   flex: 1;
   overflow: hidden;
   min-height: 0;
 }
 
 .col-sources {
+  flex: 0 0 var(--sources-w, 300px);
+  min-width: 160px;
   overflow-y: auto;
   padding: 14px 18px;
-  border-right: 1px solid var(--border);
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
 }
 
+.col-resize-handle {
+  flex-shrink: 0;
+  width: 4px;
+  background: var(--border);
+  cursor: col-resize;
+  transition: background 0.15s;
+  position: relative;
+}
+.col-resize-handle:hover,
+.col-resize-handle.dragging { background: var(--accent); }
+
 .col-notes {
+  flex: 1;
+  min-width: 200px;
   overflow-y: auto;
   padding: 14px 16px;
   scrollbar-width: thin;
@@ -415,59 +429,108 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .add-status.ok { color: var(--success); }
 .add-status.error { color: var(--danger); }
 
+.ingest-progress { height: 3px; border-radius: 2px; background: var(--border); overflow: hidden; }
+.ingest-progress.hidden { display: none; }
+.ingest-progress-bar {
+  height: 100%;
+  width: 40%;
+  background: var(--accent);
+  border-radius: 2px;
+  animation: ingest-slide 1.4s ease-in-out infinite;
+}
+@keyframes ingest-slide {
+  0%   { transform: translateX(-200%); }
+  100% { transform: translateX(350%); }
+}
+
 /* ── Tag chip input ─────────────────────────────────────────── */
 .tag-input-wrap { position: relative; }
+.tag-input-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
 
 .tag-input-box {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 5px;
   align-items: center;
-  padding: 4px 8px;
+  padding: 6px 8px;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   cursor: text;
-  min-height: 30px;
+  min-height: 36px;
+  transition: border-color 0.15s;
 }
-.tag-input-box:focus-within { border-color: var(--accent); }
+.tag-input-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(108,142,245,0.12); }
 .tag-input-box input {
   border: none;
-  padding: 1px 3px;
+  padding: 2px 4px;
   background: transparent;
   color: var(--text);
   flex: 1;
-  min-width: 60px;
-  font-size: 12px;
+  min-width: 80px;
+  font-size: 12.5px;
   font-family: inherit;
   outline: none;
 }
+.tag-input-box input::placeholder { color: var(--text-dim); }
 
 .tag-chip {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   background: var(--accent-dim);
-  color: var(--text);
-  border-radius: 3px;
-  padding: 1px 6px;
-  font-size: 11px;
+  border: 1px solid rgba(108,142,245,0.3);
+  color: var(--accent);
+  border-radius: 4px;
+  padding: 2px 7px 2px 8px;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.4;
 }
-.tag-chip button { background: none; border: none; color: var(--text-dim); padding: 0; font-size: 10px; cursor: pointer; }
+.tag-chip button {
+  background: none;
+  border: none;
+  color: var(--accent);
+  opacity: 0.5;
+  padding: 0;
+  font-size: 11px;
+  cursor: pointer;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  transition: opacity 0.1s;
+}
+.tag-chip button:hover { opacity: 1; }
 
 .tag-suggestions {
   position: absolute;
-  top: calc(100% + 3px);
+  top: calc(100% + 4px);
   left: 0; right: 0;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   z-index: 100;
-  max-height: 120px;
+  max-height: 140px;
   overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
-.tag-sugg-item { padding: 6px 10px; cursor: pointer; font-size: 12px; }
-.tag-sugg-item:hover { background: var(--border); }
+.tag-sugg-item {
+  padding: 7px 10px;
+  cursor: pointer;
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-dim);
+}
+.tag-sugg-item::before { content: '#'; font-size: 11px; color: var(--accent); opacity: 0.7; }
+.tag-sugg-item:hover { background: var(--border); color: var(--text); }
 
 /* ── Source rows ────────────────────────────────────────────── */
 .source-row {
@@ -506,7 +569,9 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   font-size: 13px;
   font-weight: 500;
   word-break: break-word;
+  cursor: pointer;
 }
+.source-name:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
 
 .status-badge {
   font-size: 10px;
@@ -567,37 +632,31 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .expand-footer { margin-top: 8px; }
 
-/* ── Note form ──────────────────────────────────────────────── */
-.new-note-wrap {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 9px 11px;
-  margin-bottom: 10px;
-}
-
-.new-note-wrap textarea {
-  width: 100%;
-  min-height: 68px;
-  resize: vertical;
-  background: transparent;
-  border: none;
-  color: var(--text);
-  font-size: 13px;
-  font-family: inherit;
-  outline: none;
-  line-height: 1.5;
-}
-.new-note-wrap textarea::placeholder { color: var(--text-dim); }
-
-.note-form-footer {
+.source-tag-edit {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 7px;
-  margin-top: 7px;
-  padding-top: 7px;
+  gap: 5px;
+  margin-top: 10px;
+  padding-top: 8px;
   border-top: 1px solid var(--border);
 }
+.source-tag-chips { display: contents; }
+.source-tag-input-wrap { display: inline-flex; }
+.source-tag-input {
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 4px;
+  color: var(--text-dim);
+  font-size: 11.5px;
+  font-family: inherit;
+  padding: 2px 8px;
+  outline: none;
+  width: 90px;
+  transition: border-color 0.15s, color 0.15s;
+}
+.source-tag-input:focus { border-color: var(--accent); color: var(--text); width: 120px; }
+
 
 .source-select {
   flex: 1;
@@ -624,6 +683,8 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .note-card.editing { border-color: var(--accent); }
 
 .note-meta { font-size: 11px; color: var(--text-dim); margin-bottom: 5px; }
+.source-ref-link { color: var(--text-dim); text-decoration: underline; text-underline-offset: 2px; }
+.source-ref-link:hover { color: var(--accent); }
 
 .note-body {
   font-size: 13px;
@@ -632,31 +693,13 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   word-break: break-word;
   cursor: pointer;
   color: var(--text);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .note-body:hover { color: var(--accent); }
 
-.note-edit-textarea {
-  width: 100%;
-  min-height: 80px;
-  resize: vertical;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--text);
-  font-size: 13px;
-  font-family: inherit;
-  padding: 7px 9px;
-  outline: none;
-}
-.note-edit-textarea:focus { border-color: var(--accent); }
-
-.note-actions {
-  display: flex;
-  gap: 5px;
-  margin-top: 6px;
-  justify-content: flex-end;
-  align-items: center;
-}
 
 /* ── Modal ──────────────────────────────────────────────────── */
 .modal-overlay {
@@ -701,6 +744,27 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   justify-content: flex-end;
   gap: 7px;
 }
+
+/* ── Note modal ─────────────────────────────────────────────── */
+.note-modal { width: 560px; }
+.note-modal-textarea {
+  width: 100%;
+  min-height: 140px;
+  resize: vertical;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 13.5px;
+  font-family: inherit;
+  line-height: 1.6;
+  padding: 9px 11px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.note-modal-textarea:focus { border-color: var(--accent); }
+.note-modal-hint { font-size: 11px; color: var(--text-dim); margin-right: auto; }
+.note-modal-goto { color: var(--text-dim); font-size: 11.5px; }
 
 /* ── Global search modal ────────────────────────────────────── */
 .gsearch-modal {
@@ -829,7 +893,7 @@ input[type="text"]::placeholder { color: var(--text-dim); }
 
       <div class="topic-columns">
 
-        <!-- Sources column -->
+        <!-- Notes column (left conceptually secondary, right is main) -->
         <div class="col-sources">
           <div class="col-header">
             <span class="col-title">Sources</span>
@@ -840,10 +904,11 @@ input[type="text"]::placeholder { color: var(--text-dim); }
             <input type="text" id="add-url" placeholder="URL or absolute file path…"
               onkeydown="if(event.key==='Enter')submitIngest()" />
             <div class="tag-input-wrap">
+              <div class="tag-input-label">Tags</div>
               <div class="tag-input-box" id="tag-input-box"
                 onclick="document.getElementById('tag-text').focus()">
-                <div id="tag-chips"></div>
-                <input type="text" id="tag-text" placeholder="Add tags…" autocomplete="off"
+                <div id="tag-chips" style="display:contents;"></div>
+                <input type="text" id="tag-text" placeholder="Type and press Enter…" autocomplete="off"
                   oninput="onTagInput()" onkeydown="onTagKeydown(event)" onblur="hideTagSugg()" />
               </div>
               <div id="tag-sugg" class="tag-suggestions hidden"></div>
@@ -852,27 +917,23 @@ input[type="text"]::placeholder { color: var(--text-dim); }
               <button class="btn-primary btn-sm" id="add-btn" onclick="submitIngest()">Add source</button>
               <button class="btn-ghost btn-sm" onclick="toggleAddForm()">Cancel</button>
             </div>
+            <div id="ingest-progress" class="ingest-progress hidden">
+              <div class="ingest-progress-bar"></div>
+            </div>
             <div id="add-status" class="add-status"></div>
           </div>
 
           <div id="sources-list"></div>
         </div>
 
+        <div class="col-resize-handle" id="col-resize"></div>
+
         <!-- Notes column -->
         <div class="col-notes" id="col-notes">
           <div class="col-header">
             <span class="col-title">Notes</span>
+            <button class="btn-ghost btn-sm" onclick="openNoteModal()">+ New note</button>
           </div>
-
-          <div class="new-note-wrap">
-            <textarea id="new-note-body"
-              placeholder="Capture an insight, question, or summary…"></textarea>
-            <div class="note-form-footer">
-              <select id="note-source-select" class="source-select"></select>
-              <button class="btn-primary btn-sm" onclick="submitNote()">Save</button>
-            </div>
-          </div>
-
           <div id="notes-list"></div>
         </div>
 
@@ -899,6 +960,30 @@ input[type="text"]::placeholder { color: var(--text-dim); }
     <div class="modal-footer">
       <button class="btn-ghost" onclick="closeNewTopicModal()">Cancel</button>
       <button class="btn-primary" onclick="submitNewTopic()">Create topic</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── New note modal ───────────────────────────────────────── -->
+<div id="note-modal" class="modal-overlay hidden"
+  onclick="if(event.target===this)closeNoteModal()">
+  <div class="modal note-modal">
+    <div class="modal-header">
+      <span id="note-modal-title">New note</span>
+      <button class="btn-icon" onclick="closeNoteModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <textarea id="note-modal-body" class="note-modal-textarea"
+        placeholder="Capture an insight, question, or summary…"
+        onkeydown="if((event.metaKey||event.ctrlKey)&&event.key==='Enter')submitNoteModal()"></textarea>
+      <input type="hidden" id="note-modal-source" />
+    </div>
+    <div class="modal-footer">
+      <button id="note-modal-delete" class="btn-danger-ghost hidden" onclick="deleteNoteModal()">Delete</button>
+      <button id="note-modal-goto" class="btn-ghost btn-sm note-modal-goto hidden" onclick="openSource(this.dataset.ref)">↗ To source</button>
+      <span class="note-modal-hint">⌘↵ to save</span>
+      <button class="btn-ghost" onclick="closeNoteModal()">Cancel</button>
+      <button class="btn-primary" onclick="submitNoteModal()">Save note</button>
     </div>
   </div>
 </div>
@@ -933,6 +1018,7 @@ const S = {
   sourceOutlines: {},   // sourceId → {chapters:[]} | 'loading' | null (error)
   addFormOpen: false,
   searchTimer: null,
+  editingNoteId: null,
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -1060,7 +1146,6 @@ async function refreshTopic(slug) {
   renderTagFilterBar();
   renderSources();
   renderNotes();
-  refreshNoteSourceSelect();
 }
 
 async function confirmDeleteTopic() {
@@ -1077,9 +1162,10 @@ async function confirmDeleteTopic() {
 function renderTagFilterBar() {
   const bar = document.getElementById('tag-filter-bar');
   const pills = document.getElementById('tag-filter-pills');
-  if (!S.tags.length) { bar.classList.add('hidden'); return; }
+  const visible = S.tags.filter(t => t.source_count > 0);
+  if (!visible.length) { bar.classList.add('hidden'); return; }
   bar.classList.remove('hidden');
-  pills.innerHTML = S.tags.map(t => `
+  pills.innerHTML = visible.map(t => `
     <button class="filter-tag ${S.activeTagFilters.has(t.name) ? 'active' : ''}"
         onclick="toggleTagFilter('${esc(t.name)}')">
       ${esc(t.name)} <span style="opacity:0.55">${t.source_count}</span>
@@ -1119,6 +1205,8 @@ function buildSourceRow(s) {
   const icon = SOURCE_ICONS[s.source_type] || '📎';
   const statusLabel = STATUS_LABELS[s.ingest_status] ?? s.ingest_status;
   const tags = (s.tags || []).map(t => `<span class="tag-pill">${esc(t)}</span>`).join('');
+  const statusBadge = s.ingest_status !== 'done'
+    ? `<span class="status-badge status-${s.ingest_status}">${statusLabel}</span>` : '';
   const expanded = S.expandedSources.has(s.id);
 
   let expandHtml = '';
@@ -1136,9 +1224,22 @@ function buildSourceRow(s) {
           <span class="outline-chapter-words">${c.word_count.toLocaleString()} words</span>
         </div>`).join('')}</div>`;
     }
+    const tagSuggOptions = S.tags.map(t => `<option value="${esc(t.name)}">`).join('');
+    const editableTagChips = (s.tags || []).map(t =>
+      `<span class="tag-chip">${esc(t)}<button type="button" onclick="event.stopPropagation(); removeSourceTag(${s.id}, '${esc(t)}')">✕</button></span>`
+    ).join('');
     expandHtml = `
       <div class="source-expand">
         ${bodyHtml}
+        <div class="source-tag-edit">
+          <div class="source-tag-chips">${editableTagChips}</div>
+          <div class="source-tag-input-wrap">
+            <input class="source-tag-input" id="src-tag-${s.id}" placeholder="Add tag…"
+              list="src-tag-list-${s.id}" autocomplete="off"
+              onkeydown="onSrcTagKeydown(event, ${s.id}, '${esc(s.source_ref)}')" />
+            <datalist id="src-tag-list-${s.id}">${tagSuggOptions}</datalist>
+          </div>
+        </div>
         <div class="expand-footer">
           <button class="btn-ghost btn-sm"
               data-ref="${esc(s.source_ref)}"
@@ -1156,8 +1257,10 @@ function buildSourceRow(s) {
         <div class="source-icon">${icon}</div>
         <div class="source-info">
           <div class="source-name-row">
-            <span class="source-name">${esc(s.source_title || s.source_ref)}</span>
-            <span class="status-badge status-${s.ingest_status}">${statusLabel}</span>
+            <span class="source-name" data-ref="${esc(s.source_ref)}"
+              onclick="event.stopPropagation(); openSource(this.dataset.ref)"
+              title="${esc(s.source_ref)}">${esc(s.source_title || s.source_ref)}</span>
+            ${statusBadge}
           </div>
           ${s.ingest_status === 'error'
             ? `<div class="source-meta-row" style="color:var(--danger)">${esc(s.error_message)}</div>`
@@ -1176,6 +1279,40 @@ function buildSourceRow(s) {
       </div>
       ${expandHtml}
     </div>`;
+}
+
+async function removeSourceTag(sourceId, tagName) {
+  const src = S.sources.find(s => s.id === sourceId);
+  if (!src) return;
+  await postJSON(`/topics/${S.currentTopic.slug}/tags/remove`, { source_ref: src.source_ref, tags: [tagName] });
+  await refreshTopic(S.currentTopic.slug);
+}
+
+async function addSourceTag(sourceId, sourceRef, tagName) {
+  tagName = tagName.trim().toLowerCase().replace(/\s+/g, '-');
+  if (!tagName) return;
+  const src = S.sources.find(s => s.id === sourceId);
+  if (src?.tags?.includes(tagName)) return;
+  await postJSON(`/topics/${S.currentTopic.slug}/tags/add`, { source_ref: sourceRef, tags: [tagName] });
+  await refreshTopic(S.currentTopic.slug);
+}
+
+function onSrcTagKeydown(e, sourceId, sourceRef) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    e.stopPropagation();
+    const input = document.getElementById(`src-tag-${sourceId}`);
+    addSourceTag(sourceId, sourceRef, input.value);
+    input.value = '';
+  }
+}
+
+function openSource(ref) {
+  if (/^https?:\/\//i.test(ref)) {
+    window.open(ref, '_blank', 'noopener');
+  } else {
+    fetch('/open', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: ref }) });
+  }
 }
 
 async function toggleSource(sourceId) {
@@ -1221,14 +1358,16 @@ async function submitIngest() {
   if (!url) { setAddStatus('Enter a URL or file path.', 'error'); return; }
 
   const btn = document.getElementById('add-btn');
+  const progress = document.getElementById('ingest-progress');
   const tags = [...S.pendingTags];
   btn.disabled = true;
-  btn.textContent = '⏳ Indexing…';
+  btn.textContent = 'Indexing…';
+  progress.classList.remove('hidden');
   setAddStatus('', '');
 
   try {
     const src = await postJSON(`/topics/${S.currentTopic.slug}/ingest`, { path_or_url: url, tags });
-    setAddStatus(`✓ "${src.source_title}" — ${src.chunk_count} chunks added.`, 'ok');
+    setAddStatus(`✓ "${src.source_title}" — ${src.chunk_count} chunks indexed.`, 'ok');
     document.getElementById('add-url').value = '';
     S.pendingTags = [];
     renderTagChips();
@@ -1238,6 +1377,7 @@ async function submitIngest() {
   } finally {
     btn.disabled = false;
     btn.textContent = 'Add source';
+    progress.classList.add('hidden');
   }
 }
 
@@ -1301,22 +1441,81 @@ function hideTagSugg() {
 }
 
 // ── Notes ──────────────────────────────────────────────────────────────────
-function refreshNoteSourceSelect() {
-  const select = document.getElementById('note-source-select');
-  const prev = select.value;
-  select.innerHTML = '<option value="">— no source link —</option>' +
-    S.sources
-      .filter(s => s.ingest_status === 'done')
-      .map(s => `<option value="${esc(s.source_ref)}">${esc(s.source_title || s.source_ref)}</option>`)
-      .join('');
-  if (prev) select.value = prev;
+function _setNoteModalSource(sourceRef) {
+  document.getElementById('note-modal-source').value = sourceRef || '';
+  const btn = document.getElementById('note-modal-goto');
+  if (sourceRef) {
+    btn.dataset.ref = sourceRef;
+    btn.classList.remove('hidden');
+  } else {
+    btn.classList.add('hidden');
+  }
 }
 
-function prefillNoteSource(sourceRef, sourceTitle) {
-  const select = document.getElementById('note-source-select');
-  select.value = sourceRef;
-  document.getElementById('new-note-body').focus();
-  document.getElementById('col-notes').scrollTop = 0;
+function openNoteModal(prefillSourceRef) {
+  S.editingNoteId = null;
+  _setNoteModalSource(prefillSourceRef);
+  document.getElementById('note-modal-title').textContent = prefillSourceRef ? 'New linked note' : 'New note';
+  document.getElementById('note-modal-body').value = '';
+  document.getElementById('note-modal-delete').classList.add('hidden');
+  document.getElementById('note-modal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('note-modal-body').focus(), 50);
+}
+
+function openNoteForEdit(noteId) {
+  const note = S.notes.find(n => n.id === noteId);
+  if (!note) return;
+  S.editingNoteId = noteId;
+  const src = note.source_id ? S.sources.find(s => s.id === note.source_id) : null;
+  _setNoteModalSource(src?.source_ref);
+  document.getElementById('note-modal-title').textContent = 'Edit note';
+  document.getElementById('note-modal-body').value = note.body;
+  document.getElementById('note-modal-delete').classList.remove('hidden');
+  document.getElementById('note-modal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('note-modal-body').focus(), 50);
+}
+
+function closeNoteModal() {
+  document.getElementById('note-modal').classList.add('hidden');
+  S.editingNoteId = null;
+}
+
+async function submitNoteModal() {
+  const body = document.getElementById('note-modal-body').value.trim();
+  if (!body) return;
+  const source_ref = document.getElementById('note-modal-source').value;
+  if (S.editingNoteId) {
+    await apiFetch(`/topics/${S.currentTopic.slug}/notes/${S.editingNoteId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ body }),
+    });
+  } else {
+    await postJSON(`/topics/${S.currentTopic.slug}/notes`, { body, source_ref });
+  }
+  closeNoteModal();
+  await refreshTopic(S.currentTopic.slug);
+}
+
+async function deleteNoteModal() {
+  if (!S.editingNoteId) return;
+  if (!confirm('Delete this note?')) return;
+  await apiFetch(`/topics/${S.currentTopic.slug}/notes/${S.editingNoteId}`, { method: 'DELETE' });
+  closeNoteModal();
+  await refreshTopic(S.currentTopic.slug);
+}
+
+function prefillNoteSource(sourceRef) {
+  openNoteModal(sourceRef);
+}
+
+function srcLink(src) {
+  const label = esc(src.source_title || src.source_ref);
+  const ref = src.source_ref || '';
+  if (/^https?:\/\//i.test(ref)) {
+    return `<a href="${esc(ref)}" target="_blank" rel="noopener" class="source-ref-link">${label}</a>`;
+  }
+  return label;
 }
 
 function renderNotes() {
@@ -1330,54 +1529,14 @@ function renderNotes() {
     return `
       <div class="note-card" id="note-${n.id}">
         <div class="note-meta">
-          ${timeAgo(n.created_at)}${src ? ` · ${esc(src.source_title || src.source_ref)}` : ''}
+          ${timeAgo(n.created_at)}${src ? ` · ${srcLink(src)}` : ''}
         </div>
-        <div class="note-body" onclick="expandNote(${n.id})">${esc(n.body)}</div>
+        <div class="note-body" onclick="openNoteForEdit(${n.id})">${esc(n.body)}</div>
       </div>`;
   }).join('');
 }
 
-async function submitNote() {
-  const body = document.getElementById('new-note-body').value.trim();
-  if (!body) return;
-  const source_ref = document.getElementById('note-source-select').value;
-  await postJSON(`/topics/${S.currentTopic.slug}/notes`, { body, source_ref });
-  document.getElementById('new-note-body').value = '';
-  document.getElementById('note-source-select').value = '';
-  await refreshTopic(S.currentTopic.slug);
-}
 
-function expandNote(noteId) {
-  const card = document.getElementById(`note-${noteId}`);
-  const note = S.notes.find(n => n.id === noteId);
-  if (!note) return;
-  card.classList.add('editing');
-  card.innerHTML = `
-    <textarea class="note-edit-textarea" id="note-edit-${noteId}">${esc(note.body)}</textarea>
-    <div class="note-actions">
-      <button class="btn-icon" title="Delete note" onclick="deleteNote(${noteId})">🗑</button>
-      <button class="btn-ghost btn-sm" onclick="renderNotes()">Cancel</button>
-      <button class="btn-primary btn-sm" onclick="saveNote(${noteId})">Save</button>
-    </div>`;
-  document.getElementById(`note-edit-${noteId}`).focus();
-}
-
-async function saveNote(noteId) {
-  const body = document.getElementById(`note-edit-${noteId}`).value.trim();
-  if (!body) return;
-  await apiFetch(`/topics/${S.currentTopic.slug}/notes/${noteId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ body }),
-  });
-  await refreshTopic(S.currentTopic.slug);
-}
-
-async function deleteNote(noteId) {
-  if (!confirm('Delete this note?')) return;
-  await apiFetch(`/topics/${S.currentTopic.slug}/notes/${noteId}`, { method: 'DELETE' });
-  await refreshTopic(S.currentTopic.slug);
-}
 
 // ── In-topic search ────────────────────────────────────────────────────────
 function onTopicSearch() {
@@ -1467,8 +1626,47 @@ function closeGlobalSearch() {
 
 // ── Keyboard shortcuts ─────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeGlobalSearch(); closeTopicSearch(); }
+  if (e.key === 'Escape') { closeGlobalSearch(); closeTopicSearch(); closeNoteModal(); }
 });
+
+// ── Resizable column divider ───────────────────────────────────────────────
+(function () {
+  const STORAGE_KEY = 'ld_sources_w';
+  const handle = document.getElementById('col-resize');
+  const col = document.querySelector('.col-sources');
+  const MIN_SRC = 160, MIN_NOTES = 200;
+
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) col.style.flex = `0 0 ${saved}px`;
+
+  let dragging = false, startX, startW;
+
+  handle.addEventListener('mousedown', e => {
+    dragging = true;
+    startX = e.clientX;
+    startW = col.getBoundingClientRect().width;
+    handle.classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const total = col.parentElement.getBoundingClientRect().width;
+    const w = Math.min(Math.max(startW + e.clientX - startX, MIN_SRC), total - MIN_NOTES - 4);
+    col.style.flex = `0 0 ${w}px`;
+    localStorage.setItem(STORAGE_KEY, w);
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    handle.classList.remove('dragging');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  });
+})();
 </script>
 </body>
 </html>
