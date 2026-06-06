@@ -72,10 +72,20 @@ PORT=9000 ./start.sh  # custom port
 
 ---
 
-## Claude Code integration (MCP)
+## AI client integration (MCP)
 
-`setup.sh` handles this automatically, but to register manually, add to `~/.claude/settings.json` and restart Claude Code:
+`setup.sh` will offer to register the MCP server for both clients. To re-run either step standalone:
 
+```bash
+.venv/bin/python configure_mcp.py /absolute/path/to/library-digest
+.venv/bin/python configure_copilot.py /absolute/path/to/library-digest
+```
+
+### Claude Code
+
+Writes to `~/.claude/settings.json`. Restart Claude Code after registering.
+
+Manual entry:
 ```json
 "mcpServers": {
   "library-digest": {
@@ -85,13 +95,25 @@ PORT=9000 ./start.sh  # custom port
 }
 ```
 
-> Use the absolute `.venv/bin/python` path — Claude Code starts MCP servers in a clean shell where `python` may not resolve to the right environment.
+### GitHub Copilot CLI
 
-To re-run the config step standalone:
+Writes to `~/.copilot/mcp-config.json`. Start a new Copilot CLI session after registering.
 
-```bash
-.venv/bin/python configure_mcp.py /absolute/path/to/library-digest
+Manual entry:
+```json
+{
+  "mcpServers": {
+    "library-digest": {
+      "type": "local",
+      "command": "/absolute/path/to/library-digest/.venv/bin/python",
+      "args": ["/absolute/path/to/library-digest/server.py"],
+      "tools": ["*"]
+    }
+  }
+}
 ```
+
+> Both clients require the absolute `.venv/bin/python` path — they start MCP servers in a clean shell where `python` may not resolve to the right environment.
 
 ---
 

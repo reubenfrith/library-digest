@@ -41,22 +41,23 @@ embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-
 PYEOF
 ok "Embedding model ready."
 
-# ── MCP server config ─────────────────────────────────────────────────────
-SETTINGS="$HOME/.claude/settings.json"
+# ── Claude Code MCP config ────────────────────────────────────────────────
+CLAUDE_SETTINGS="$HOME/.claude/settings.json"
 
 echo ""
 echo "Register the MCP server in Claude Code?"
-echo "  Settings file: $SETTINGS"
+echo "  Settings file: $CLAUDE_SETTINGS"
 printf "  [y/N] "
 read -r REPLY
 echo ""
 
+REGISTERED_CLAUDE=false
 if [[ "$REPLY" =~ ^[Yy]$ ]]; then
   "$PYTHON" "$SCRIPT_DIR/configure_mcp.py" "$SCRIPT_DIR"
-  ok "MCP server 'library-digest' registered."
-  warn "Restart Claude Code to activate the new tools."
+  ok "MCP server 'library-digest' registered in Claude Code."
+  REGISTERED_CLAUDE=true
 else
-  echo "Skipped. To register manually, add this to $SETTINGS:"
+  echo "Skipped. To register manually, add this to $CLAUDE_SETTINGS:"
   echo ""
   echo '  "mcpServers": {'
   echo '    "library-digest": {'
@@ -66,12 +67,41 @@ else
   echo '  }'
 fi
 
+# ── GitHub Copilot CLI MCP config ─────────────────────────────────────────
+COPILOT_CONFIG="$HOME/.copilot/mcp-config.json"
+
+echo ""
+echo "Register the MCP server in GitHub Copilot CLI?"
+echo "  Config file: $COPILOT_CONFIG"
+printf "  [y/N] "
+read -r REPLY
+echo ""
+
+REGISTERED_COPILOT=false
+if [[ "$REPLY" =~ ^[Yy]$ ]]; then
+  "$PYTHON" "$SCRIPT_DIR/configure_copilot.py" "$SCRIPT_DIR"
+  ok "MCP server 'library-digest' registered in GitHub Copilot CLI."
+  REGISTERED_COPILOT=true
+else
+  echo "Skipped. To register manually, add this to $COPILOT_CONFIG:"
+  echo ""
+  echo '  "mcpServers": {'
+  echo '    "library-digest": {'
+  echo "      \"type\": \"local\","
+  echo "      \"command\": \"$PYTHON\","
+  echo "      \"args\": [\"$SCRIPT_DIR/server.py\"],"
+  echo '      "tools": ["*"]'
+  echo '    }'
+  echo '  }'
+fi
+
 # ── Done ──────────────────────────────────────────────────────────────────
 echo ""
 echo "${bold}Done.${reset}"
 echo ""
 echo "Next steps:"
-echo "  • Restart Claude Code if you registered the MCP server."
+[[ "$REGISTERED_CLAUDE" == true ]]  && echo "  • Restart Claude Code to activate the new tools."
+[[ "$REGISTERED_COPILOT" == true ]] && echo "  • Start a new Copilot CLI session to pick up the MCP server."
 echo "  • Start the browser dashboard:  ${bold}./start.sh${reset}"
 echo "  • Open:                         ${bold}http://localhost:8000${reset}"
 echo ""
