@@ -29,27 +29,19 @@ def get_client() -> chromadb.PersistentClient:
     return chromadb.PersistentClient(path=CHROMA_DIR)
 
 
-def get_or_create_collection(client: chromadb.PersistentClient, library: str):
-    name = _slugify(library)
+def get_or_create_collection(client: chromadb.PersistentClient, topic_slug: str):
     return client.get_or_create_collection(
-        name=name,
-        metadata={"library_name": library, "hnsw:space": "cosine"},
+        name=topic_slug,
+        metadata={"hnsw:space": "cosine"},
         embedding_function=_embedding_fn(),
     )
 
 
-def list_collections(client: chromadb.PersistentClient) -> list[dict]:
-    cols = client.list_collections()
-    result = []
-    for col in cols:
-        full = client.get_collection(col.name, embedding_function=_embedding_fn())
-        display = (full.metadata or {}).get("library_name", col.name)
-        result.append({
-            "name": col.name,
-            "display_name": display,
-            "total_chunks": full.count(),
-        })
-    return result
+def delete_collection(client: chromadb.PersistentClient, topic_slug: str) -> None:
+    try:
+        client.delete_collection(topic_slug)
+    except Exception:
+        pass
 
 
 def add_chunks(collection, chunks: list[dict], batch_size: int = 100) -> None:
@@ -65,11 +57,13 @@ def add_chunks(collection, chunks: list[dict], batch_size: int = 100) -> None:
 def search(
     collection,
     query: str,
-    top_k: int = 5,
-    module_filter: str = "",
+    top_k: int = 8,
+    source_ids: list[int] | None = None,
 ) -> list[dict]:
     count = collection.count()
     if count == 0:
+        return []
+    if source_ids is not None and not source_ids:
         return []
 
     n = min(top_k, count)
@@ -78,8 +72,8 @@ def search(
         "n_results": n,
         "include": ["documents", "metadatas", "distances"],
     }
-    if module_filter:
-        kwargs["where"] = {"module": module_filter}
+    if source_ids is not None:
+        kwargs["where"] = {"source_id": {"$in": source_ids}}
 
     results = collection.query(**kwargs)
     docs = results["documents"][0]
@@ -92,34 +86,18 @@ def search(
     ]
 
 
-def list_sources(collection) -> list[dict]:
-    result = collection.get(include=["metadatas"])
-    sources: dict[str, dict] = {}
-
-    for meta in result["metadatas"]:
-        ref = meta.get("source_ref", "")
-        if ref not in sources:
-            sources[ref] = {
-                "source_ref": ref,
-                "source_title": meta.get("source_title", ""),
-                "source_type": meta.get("source_type", ""),
-                "module": meta.get("module", ""),
-                "chunk_count": 0,
-            }
-        sources[ref]["chunk_count"] += 1
-
-    return list(sources.values())
-
-
-def delete_source(collection, source_ref: str) -> None:
-    result = collection.get(where={"source_ref": source_ref})
+def delete_chunks_for_source(collection, source_id: int) -> None:
+    result = collection.get(where={"source_id": source_id})
     ids = result.get("ids", [])
     if ids:
         collection.delete(ids=ids)
 
 
-def get_all_chunks_ordered(collection) -> list[dict]:
-    result = collection.get(include=["documents", "metadatas"])
+def get_chunks_ordered(collection, source_id: int, chapter: str = "") -> list[dict]:
+    where: dict = {"source_id": source_id}
+    if chapter:
+        where = {"$and": [{"source_id": source_id}, {"chapter": chapter}]}
+    result = collection.get(where=where, include=["documents", "metadatas"])
     pairs = [
         {"text": doc, "metadata": meta}
         for doc, meta in zip(result["documents"], result["metadatas"])
@@ -129,3 +107,33 @@ def get_all_chunks_ordered(collection) -> list[dict]:
         x["metadata"].get("chunk_index", 0),
     ))
     return pairs
+
+
+def embed_note(collection, note_id: int, body: str, topic_slug: str) -> str:
+    import uuid
+    chroma_id = f"note-{note_id}-{uuid.uuid4().hex[:8]}"
+    collection.add(
+        ids=[chroma_id],
+        documents=[body],
+        metadatas=[{
+            "topic": topic_slug,
+            "source_id": 0,
+            "source_ref": "",
+            "source_title": "",
+            "source_type": "note",
+            "kind": "note",
+            "chapter": "",
+            "chapter_index": 0,
+            "chunk_index": 0,
+            "page": 0,
+            "timestamp_seconds": 0,
+        }],
+    )
+    return chroma_id
+
+
+def delete_note_embedding(collection, chroma_id: str) -> None:
+    try:
+        collection.delete(ids=[chroma_id])
+    except Exception:
+        pass

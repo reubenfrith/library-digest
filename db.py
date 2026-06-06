@@ -98,6 +98,13 @@ def create_topic(name: str, description: str = "", db_path: str = DB_PATH) -> di
     return _row(row)
 
 
+def get_topic_by_id(topic_id: int, db_path: str = DB_PATH) -> dict | None:
+    conn = get_connection(db_path)
+    row = conn.execute("SELECT * FROM topics WHERE id = ?", (topic_id,)).fetchone()
+    conn.close()
+    return _row(row)
+
+
 def get_topic(slug: str, db_path: str = DB_PATH) -> dict | None:
     conn = get_connection(db_path)
     row = conn.execute("SELECT * FROM topics WHERE slug = ?", (slug,)).fetchone()
