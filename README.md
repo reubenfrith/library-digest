@@ -204,6 +204,7 @@ library-digest/
   pyproject.toml
   setup.sh           # one-shot setup: deps, embedding model, MCP config
   start.sh           # start the dashboard at http://localhost:8000
+  visualize.py       # 3D embedding visualiser — run with `uv run visualize.py`
   configure_mcp.py   # registers the MCP server with Claude Code (user scope)
   digest.db          # SQLite database (auto-created, gitignored)
   .chroma/           # vector database (auto-created, gitignored)
@@ -260,15 +261,14 @@ docker compose up -d --build
 # → http://localhost:8090
 ```
 
-**[chromaviz](https://github.com/mtybadger/chromaviz)** — 3D PCA/tSNE visualisation of embeddings in the browser (useful for seeing how your chunks cluster)
+**Built-in: `visualize.py`** — interactive 3D scatter plot of a topic's embeddings, colour-coded by source. Uses t-SNE + PCA for dimensionality reduction and opens in the browser as a self-contained HTML file. No extra setup required — dependencies (`plotly`, `scikit-learn`) are already in `pyproject.toml`.
 
 ```bash
-pip install chromaviz
+uv run visualize.py                  # prompts for topic if more than one
+uv run visualize.py <topic-slug>     # jump straight to a topic
 ```
-```python
-from chromaviz import visualize_collection
-visualize_collection(collection)  # opens a live 3D browser view
-```
+
+Hover over any point to see the chunk text, source, and location. Useful for spotting how chunks cluster, finding outliers, and checking whether sources from different topics overlap.
 
 ### Running both at once
 
