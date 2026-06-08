@@ -4,6 +4,8 @@ A personal research environment. Ingest PDFs, EPUBs, web pages, and YouTube vide
 
 The system compounds over time: notes you save (or Claude drafts) get embedded alongside source chunks, so every future session starts with your prior thinking already in scope.
 
+See a demo/ walk thorugh here https://www.youtube.com/watch?v=xyA08Kex8OU
+
 ---
 
 ## How it works
